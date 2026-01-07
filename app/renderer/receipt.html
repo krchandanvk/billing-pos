@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            margin: 0;
+            padding: 5px;
+            width: 300px;
+            font-weight: 600;
+            /* Thermal prints are usually bold/dark */
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .left {
+            text-align: left;
+        }
+
+        .header {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .sub-header {
+            font-size: 11px;
+        }
+
+        .dashed-line {
+            border-top: 1px dashed black;
+            margin: 5px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        th {
+            font-size: 11px;
+            text-align: left;
+            padding-bottom: 4px;
+        }
+
+        td {
+            vertical-align: top;
+            font-size: 12px;
+        }
+
+        .item-row-1 {
+            /* Item name row */
+        }
+
+        .item-row-2 {
+            /* Qty Rate Amt row */
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .totals-table td {
+            padding: 2px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <div class="center">
+        <div class="header">KALLO'S TANDON</div>
+        <div class="sub-header">NEAR SATI CHAURA MANDIR</div>
+        <div class="sub-header">GURU GOVIND SINGH LINK PATH PATNA CITY</div>
+        <div class="sub-header">GST NO. 10APHPK4168H2Z2</div>
+        <div style="font-weight: bold; font-size: 14px; margin-top: 2px;">MOB-9234287770</div>
+    </div>
+
+    <!-- BILL META -->
+    <div style="margin-top: 10px; display: flex; justify-content: space-between;">
+        <div>BILL NO : <span id="bill-no">23</span></div>
+        <div>DT : <span id="date"></span> TM: <span id="time"></span></div>
+    </div>
+    <div>NAME : <span id="customer-name">4</span></div>
+
+    <div class="dashed-line"></div>
+
+    <!-- ITEM TABLE HEADER -->
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 10%;">SR</th>
+                <th style="width: 45%;">ITEM</th>
+                <th style="width: 15%; text-align: center;">QTY</th>
+                <th style="width: 15%; text-align: right;">PRICE</th>
+                <th style="width: 15%; text-align: right;">AMOUNT</th>
+            </tr>
+        </thead>
+    </table>
+
+    <div class="dashed-line"></div>
+
+    <!-- ITEMS -->
+    <table id="items-table">
+        <tbody id="items-body">
+            <!-- Items injected via JS -->
+        </tbody>
+    </table>
+
+    <div class="dashed-line"></div>
+
+    <!-- SUMMARY -->
+    <div style="display: flex; justify-content: space-between; font-weight: bold;">
+        <div>ITEM: <span id="total-items">0</span> QTY: <span id="total-qty">0</span></div>
+        <div>AMOUNT: <span id="subtotal-display">0.00</span></div>
+    </div>
+
+    <div class="dashed-line"></div>
+
+    <div class="center" style="font-size: 11px;">INCLUSIVE OF ALL TAXES</div>
+
+    <div class="dashed-line"></div>
+
+    <!-- TAXES & TOTAL -->
+    <table class="totals-table">
+        <tr>
+            <td>SGST @ 2.50%</td>
+            <td class="center">:</td>
+            <td class="right" id="sgst">0.00</td>
+        </tr>
+        <tr>
+            <td>CGST @ 2.50%</td>
+            <td class="center">:</td>
+            <td class="right" id="cgst">0.00</td>
+        </tr>
+        <tr>
+            <td>TOTAL GST</td>
+            <td class="center">:</td>
+            <td class="right" id="total-gst">0.00</td>
+        </tr>
+        <tr style="font-size: 16px; font-weight: bold;">
+            <td>GRAND TOTAL</td>
+            <td class="center">:</td>
+            <td class="right">₹ <span id="grand-total">0.00</span></td>
+        </tr>
+    </table>
+
+    <div class="dashed-line"></div>
+
+    <!-- AMOUNT IN WORDS -->
+    <div id="amount-words" style="text-transform: uppercase;">
+        ZERO ONLY.
+    </div>
+
+    <div class="center" style="margin-top: 15px;">
+        <div>FREE HOME DELIVERY MINIMUM</div>
+        <div style="font-weight: bold; border-bottom: 1px solid black; display: inline-block;">300 RS ONLY</div>
+    </div>
+
+    <script>
+        // Number to Words Converter (Simplified for Indian Context up to reasonable amounts)
+        function numToWords(num) {
+            const a = ['', 'one ', 'two ', 'three ', 'four ', 'five ', 'six ', 'seven ', 'eight ', 'nine ', 'ten ', 'eleven ', 'twelve ', 'thirteen ', 'fourteen ', 'fifteen ', 'sixteen ', 'seventeen ', 'eighteen ', 'nineteen '];
+            const b = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+
+            const inWords = (n) => {
+                if ((n = n.toString()).length > 9) return 'overflow';
+                n = ('000000000' + n).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+                if (!n) return;
+                let str = '';
+                str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'crore ' : '';
+                str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'lakh ' : '';
+                str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'thousand ' : '';
+                str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'hundred ' : '';
+                str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+                return str;
+            }
+
+            return inWords(Math.floor(num));
+        }
+
+        const renderBill = () => {
+            if (!window.billData) return;
+            const data = window.billData;
+
+            // Date & Time
+            const now = new Date();
+            document.getElementById("date").innerText = now.toLocaleDateString("en-GB");
+            document.getElementById("time").innerText = now.toLocaleTimeString("en-GB", { hour12: false });
+
+            // Items
+            const tbody = document.getElementById("items-body");
+            tbody.innerHTML = "";
+
+            let totalQty = 0;
+
+            data.items.forEach((item, index) => {
+                totalQty += item.qty;
+                // ROW 1: SR + ITEM NAME
+                const row1 = document.createElement("tr");
+                row1.innerHTML = `
+                    <td style="width: 10%; padding-left: 5px;">${index + 1}</td>
+                    <td colspan="4" style="font-weight: bold;">${item.name.toUpperCase()} <span style="font-size:10px">(${item.qtyType})</span></td>
+                `;
+
+                // ROW 2: QTY + RATE + AMT
+                const row2 = document.createElement("tr");
+                row2.innerHTML = `
+                    <td></td> 
+                    <td></td>
+                    <td class="center">${item.qty}</td>
+                    <td class="right">${item.price.toFixed(2)}</td>
+                    <td class="right">${(item.price * item.qty).toFixed(2)}</td>
+                `;
+
+                tbody.appendChild(row1);
+                tbody.appendChild(row2);
+            });
+
+            // Summary
+            document.getElementById("total-items").innerText = data.items.length;
+            document.getElementById("total-qty").innerText = totalQty;
+            document.getElementById("subtotal-display").innerText = data.subtotal.toFixed(2);
+
+            // Taxes
+            const halfGst = data.gst / 2;
+            document.getElementById("sgst").innerText = halfGst.toFixed(2);
+            document.getElementById("cgst").innerText = halfGst.toFixed(2);
+            document.getElementById("total-gst").innerText = data.gst.toFixed(2);
+
+            // Grand Total
+            const grandTotal = Math.round(data.total); // Usually bills round off
+            document.getElementById("grand-total").innerText = grandTotal.toFixed(2);
+
+            // Words
+            document.getElementById("amount-words").innerText = numToWords(grandTotal) + " ONLY.";
+        };
+
+        if (window.billData) renderBill();
+        else setInterval(() => { if (window.billData && document.getElementById("items-body").innerHTML.trim() === "") renderBill(); }, 500);
+    </script>
+</body>
+
+</html>
