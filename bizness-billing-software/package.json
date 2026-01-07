@@ -1,0 +1,39 @@
+{
+  "name": "bizness-billing-software",
+  "version": "1.0.0",
+  "description": "Offline-first Hotel & Restaurant Billing POS by Bizness Software",
+  "author": "Bizness Software (https://biznessoftware.com)",
+  "main": "app/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "concurrently \"npm:react\" \"npm:electron\"",
+    "react": "vite",
+    "electron": "electron .",
+    "build": "electron-builder",
+    "cleanup": "node scripts/cleanup.js"
+  },
+  "dependencies": {
+    "electron": "^28.0.0",
+    "sqlite3": "^5.1.7",
+    "better-sqlite3": "^9.4.0",
+    "electron-store": "^8.2.0",
+    "node-fetch": "^3.3.2",
+    "chart.js": "^4.4.1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron-builder": "^24.9.1",
+    "vite": "^5.0.10",
+    "@vitejs/plugin-react": "^4.2.1"
+  },
+  "build": {
+    "appId": "com.biznesssoftware.billing",
+    "productName": "Bizness Billing POS",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
