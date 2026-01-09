@@ -3,14 +3,19 @@
 
 <head>
     <style>
+        @page {
+            margin: 0;
+        }
+
         body {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
+            font-size: 13px;
             margin: 0;
             padding: 5px;
-            width: 300px;
+            width: 300px; /* Standard 80mm thermal paper width */
             font-weight: 600;
-            /* Thermal prints are usually bold/dark */
+            color: black;
+            background: white;
         }
 
         .center {
@@ -21,53 +26,69 @@
             text-align: right;
         }
 
-        .left {
-            text-align: left;
-        }
-
-        .header {
-            font-size: 16px;
-            font-weight: bold;
+        .header-name {
+            font-size: 20px;
+            font-weight: 900;
             margin-bottom: 2px;
+            letter-spacing: 1px;
         }
 
         .sub-header {
             font-size: 11px;
+            line-height: 1.2;
         }
 
         .dashed-line {
-            border-top: 1px dashed black;
-            margin: 5px 0;
+            border-top: 1.5px dashed black;
+            margin: 6px 0;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
         }
 
         th {
-            font-size: 11px;
-            text-align: left;
-            padding-bottom: 4px;
-        }
-
-        td {
-            vertical-align: top;
             font-size: 12px;
+            text-align: left;
+            padding: 2px 0;
         }
 
-        .item-row-1 {
-            /* Item name row */
+        .meta-text {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+            font-size: 13px;
         }
 
-        .item-row-2 {
-            /* Qty Rate Amt row */
-            font-family: 'Courier New', Courier, monospace;
+        .item-name-row {
+            font-weight: bold;
+            padding-top: 4px;
+        }
+
+        .item-values-row td {
+            padding-bottom: 4px;
         }
 
         .totals-table td {
             padding: 2px 0;
+        }
+
+        .grand-total-row {
+            font-size: 17px;
+            font-weight: 900;
+        }
+
+        #amount-words {
+            font-size: 12px;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 11px;
+            line-height: 1.3;
         }
     </style>
 </head>
@@ -76,31 +97,35 @@
 
     <!-- HEADER -->
     <div class="center">
-        <div class="header">KALLO'S TANDON</div>
+        <div class="header-name">KALLU S TONDON</div>
         <div class="sub-header">NEAR SATI CHAURA MANDIR</div>
         <div class="sub-header">GURU GOVIND SINGH LINK PATH PATNA CITY</div>
         <div class="sub-header">GST NO. 10APHPK4168H2Z2</div>
-        <div style="font-weight: bold; font-size: 14px; margin-top: 2px;">MOB-9234287770</div>
+        <div style="font-weight: 900; margin-top: 2px;">MOB-9234287770</div>
     </div>
 
     <!-- BILL META -->
-    <div style="margin-top: 10px; display: flex; justify-content: space-between;">
-        <div>BILL NO : <span id="bill-no">23</span></div>
-        <div>DT : <span id="date"></span> TM: <span id="time"></span></div>
+    <div style="margin-top: 8px;">
+        <div class="meta-text">
+            <span>BILL NO : <span id="bill-no">23</span></span>
+            <span>DT : <span id="date">03/01/26</span> TM: <span id="time">19:58:52</span></span>
+        </div>
+        <div class="meta-text">
+            <span>NAME : <span id="customer-name">CASH</span></span>
+        </div>
     </div>
-    <div>NAME : <span id="customer-name">4</span></div>
 
     <div class="dashed-line"></div>
 
-    <!-- ITEM TABLE HEADER -->
-    <table>
+    <!-- TABLE HEADER -->
+    <table style="font-size: 12px;">
         <thead>
             <tr>
                 <th style="width: 10%;">SR</th>
-                <th style="width: 45%;">ITEM</th>
+                <th style="width: 40%;">ITEM</th>
                 <th style="width: 15%; text-align: center;">QTY</th>
-                <th style="width: 15%; text-align: right;">PRICE</th>
-                <th style="width: 15%; text-align: right;">AMOUNT</th>
+                <th style="width: 17%; text-align: right;">PRICE</th>
+                <th style="width: 18%; text-align: right;">AMOUNT</th>
             </tr>
         </thead>
     </table>
@@ -117,55 +142,56 @@
     <div class="dashed-line"></div>
 
     <!-- SUMMARY -->
-    <div style="display: flex; justify-content: space-between; font-weight: bold;">
+    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;">
         <div>ITEM: <span id="total-items">0</span> QTY: <span id="total-qty">0</span></div>
-        <div>AMOUNT: <span id="subtotal-display">0.00</span></div>
+        <div class="right">AMOUNT: <span id="subtotal-display">0.00</span></div>
     </div>
 
-    <div class="dashed-line"></div>
-
-    <div class="center" style="font-size: 11px;">INCLUSIVE OF ALL TAXES</div>
+    <div class="center" style="font-size: 11px; margin: 5px 0;">INCLUSIVE OF ALL TAXES</div>
 
     <div class="dashed-line"></div>
 
     <!-- TAXES & TOTAL -->
     <table class="totals-table">
         <tr>
-            <td>SGST @ 2.50%</td>
-            <td class="center">:</td>
+            <td style="width: 40%;">SGST</td>
+            <td style="width: 25%; text-align: center;">@ 2.50%</td>
+            <td style="width: 5%; text-align: center;">:</td>
             <td class="right" id="sgst">0.00</td>
         </tr>
         <tr>
-            <td>CGST @ 2.50%</td>
-            <td class="center">:</td>
+            <td>CGST</td>
+            <td style="text-align: center;">@ 2.50%</td>
+            <td style="text-align: center;">:</td>
             <td class="right" id="cgst">0.00</td>
         </tr>
         <tr>
             <td>TOTAL GST</td>
-            <td class="center">:</td>
+            <td></td>
+            <td style="text-align: center;">:</td>
             <td class="right" id="total-gst">0.00</td>
         </tr>
-        <tr style="font-size: 16px; font-weight: bold;">
+        <tr class="grand-total-row">
             <td>GRAND TOTAL</td>
-            <td class="center">:</td>
-            <td class="right">₹ <span id="grand-total">0.00</span></td>
+            <td></td>
+            <td style="text-align: center;">: ₹</td>
+            <td class="right" id="grand-total">950.00</td>
         </tr>
     </table>
 
     <div class="dashed-line"></div>
 
     <!-- AMOUNT IN WORDS -->
-    <div id="amount-words" style="text-transform: uppercase;">
+    <div id="amount-words">
         ZERO ONLY.
     </div>
 
-    <div class="center" style="margin-top: 15px;">
+    <div class="center footer">
         <div>FREE HOME DELIVERY MINIMUM</div>
-        <div style="font-weight: bold; border-bottom: 1px solid black; display: inline-block;">300 RS ONLY</div>
+        <div style="font-weight: 900;">388 RS ONLY</div>
     </div>
 
     <script>
-        // Number to Words Converter (Simplified for Indian Context up to reasonable amounts)
         function numToWords(num) {
             const a = ['', 'one ', 'two ', 'three ', 'four ', 'five ', 'six ', 'seven ', 'eight ', 'nine ', 'ten ', 'eleven ', 'twelve ', 'thirteen ', 'fourteen ', 'fifteen ', 'sixteen ', 'seventeen ', 'eighteen ', 'nineteen '];
             const b = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
@@ -182,7 +208,6 @@
                 str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
                 return str;
             }
-
             return inWords(Math.floor(num));
         }
 
@@ -190,12 +215,12 @@
             if (!window.billData) return;
             const data = window.billData;
 
-            // Date & Time
+            document.getElementById("bill-no").innerText = data.billNo || "23";
             const now = new Date();
             document.getElementById("date").innerText = now.toLocaleDateString("en-GB");
             document.getElementById("time").innerText = now.toLocaleTimeString("en-GB", { hour12: false });
+            document.getElementById("customer-name").innerText = data.customerName || data.customerId || "CASH";
 
-            // Items
             const tbody = document.getElementById("items-body");
             tbody.innerHTML = "";
 
@@ -203,48 +228,53 @@
 
             data.items.forEach((item, index) => {
                 totalQty += item.qty;
-                // ROW 1: SR + ITEM NAME
+                
+                // Row 1: SR + ITEM NAME
                 const row1 = document.createElement("tr");
+                row1.className = "item-name-row";
                 row1.innerHTML = `
-                    <td style="width: 10%; padding-left: 5px;">${index + 1}</td>
-                    <td colspan="4" style="font-weight: bold;">${item.name.toUpperCase()} <span style="font-size:10px">(${item.qtyType})</span></td>
+                    <td style="width: 10%;">${index + 1}</td>
+                    <td colspan="4">${item.name.toUpperCase()}</td>
                 `;
 
-                // ROW 2: QTY + RATE + AMT
+                // Row 2: Values (Qty, Price, Amount)
                 const row2 = document.createElement("tr");
+                row2.className = "item-values-row";
+                const qtyDisplay = item.qtyType && item.qtyType.toUpperCase() !== 'FULL' && item.qtyType.toUpperCase() !== 'HALF' ? item.qty + item.qtyType : item.qty;
                 row2.innerHTML = `
-                    <td></td> 
                     <td></td>
-                    <td class="center">${item.qty}</td>
-                    <td class="right">${item.price.toFixed(2)}</td>
-                    <td class="right">${(item.price * item.qty).toFixed(2)}</td>
+                    <td></td>
+                    <td class="center" style="width: 15%;">${qtyDisplay}</td>
+                    <td class="right" style="width: 17%;">${item.price.toFixed(2)}</td>
+                    <td class="right" style="width: 18%;">${(item.price * item.qty).toFixed(2)}</td>
                 `;
 
                 tbody.appendChild(row1);
                 tbody.appendChild(row2);
             });
 
-            // Summary
             document.getElementById("total-items").innerText = data.items.length;
             document.getElementById("total-qty").innerText = totalQty;
             document.getElementById("subtotal-display").innerText = data.subtotal.toFixed(2);
 
-            // Taxes
-            const halfGst = data.gst / 2;
-            document.getElementById("sgst").innerText = halfGst.toFixed(2);
-            document.getElementById("cgst").innerText = halfGst.toFixed(2);
-            document.getElementById("total-gst").innerText = data.gst.toFixed(2);
+            document.getElementById("sgst").innerText = (data.sgst || (data.total - data.subtotal) / 2).toFixed(2);
+            document.getElementById("cgst").innerText = (data.cgst || (data.total - data.subtotal) / 2).toFixed(2);
+            document.getElementById("total-gst").innerText = ((data.sgst + data.cgst) || (data.total - data.subtotal)).toFixed(2);
 
-            // Grand Total
-            const grandTotal = Math.round(data.total); // Usually bills round off
+            const grandTotal = Math.round(data.total);
             document.getElementById("grand-total").innerText = grandTotal.toFixed(2);
-
-            // Words
             document.getElementById("amount-words").innerText = numToWords(grandTotal) + " ONLY.";
         };
 
         if (window.billData) renderBill();
-        else setInterval(() => { if (window.billData && document.getElementById("items-body").innerHTML.trim() === "") renderBill(); }, 500);
+        else {
+            const checkData = setInterval(() => {
+                if (window.billData) {
+                    renderBill();
+                    clearInterval(checkData);
+                }
+            }, 100);
+        }
     </script>
 </body>
 

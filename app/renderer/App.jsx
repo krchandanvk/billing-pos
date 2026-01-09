@@ -1,75 +1,117 @@
 import { useState } from "react";
-import brandLogo from "./assets/brand_logo.png";
 import BillingPage from "./pages/BillingPage";
 import CustomerPage from "./pages/CustomerPage";
 import HistoryPage from "./pages/HistoryPage";
 import DashboardPage from "./pages/DashboardPage";
+import MenuPage from "./pages/MenuPage";
+import ReportsPage from "./pages/ReportsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("billing");
 
+  // Safety check for browser mode
+  const isElectron = window.api !== undefined;
+  console.log("App initializing... isElectron:", isElectron);
+
   const menuItems = [
     { id: "billing", label: "Billing", icon: "🛒" },
+    { id: "menu", label: "Menu", icon: "📋" },
     { id: "history", label: "History", icon: "📚" },
     { id: "customers", label: "Customers", icon: "👤" },
     { id: "analytics", label: "Analytics", icon: "📊" },
+    { id: "reports", label: "Reports", icon: "📈" },
+    { id: "settings", label: "Settings", icon: "⚙️" },
   ];
 
   const renderContent = () => {
     switch (activeTab) {
       case "billing": return <BillingPage />;
+      case "menu": return <MenuPage />;
       case "history": return <HistoryPage />;
       case "customers": return <CustomerPage />;
       case "analytics": return <DashboardPage />;
+      case "reports": return <ReportsPage />;
+      case "settings": return <SettingsPage />;
       default: return <BillingPage />;
     }
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "var(--bg-app)" }}>
+      {!isElectron && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, background: "var(--accent-danger)", color: "white", padding: "8px", textAlign: "center", zIndex: 9999, fontSize: "12px", fontWeight: "600", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+          ⚠️ Running in Browser Mode. Database features will not work. Please open the Desktop App.
+        </div>
+      )}
+      
       {/* Sidebar Navigation */}
-      <div className="glass-panel" style={{ width: "220px", borderRadius: "0 20px 20px 0", borderLeft: "none", display: "flex", flexDirection: "column", padding: "20px 0" }}>
-        <div style={{ padding: "0 20px", display: "flex", alignItems: "center", gap: "10px", marginBottom: "40px" }}>
-          <img src={brandLogo} alt="Logo" style={{ height: "40px" }} />
-          <h1 style={{ margin: 0, fontSize: "20px", color: "var(--accent-primary)", letterSpacing: "1px" }}>POS</h1>
+      <div className="glass-panel" style={{ width: "200px", borderRadius: "0", borderTop: "none", borderLeft: "none", borderBottom: "none", display: "flex", flexDirection: "column", padding: "20px 0", background: "rgba(15, 23, 42, 0.4)" }}>
+        <div style={{ padding: "0 16px", display: "flex", alignItems: "center", gap: "10px", marginBottom: "32px" }}>
+          <div style={{ width: "36px", height: "36px", background: "var(--grad-primary)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", boxShadow: "var(--shadow-glow)" }}>🏪</div>
+          <div>
+            <h1 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "var(--text-main)", letterSpacing: "-0.5px" }}>Veg Restaurant</h1>
+            <p style={{ margin: 0, fontSize: "10px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "1px" }}>Pure Veg POS</p>
+          </div>
         </div>
 
-        <nav style={{ flex: 1 }}>
+        <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
+              className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
               style={{
                 width: "100%",
-                padding: "16px 24px",
-                textAlign: "left",
-                background: activeTab === item.id ? "rgba(14, 165, 233, 0.15)" : "transparent",
-                border: "none",
-                borderLeft: activeTab === item.id ? "4px solid var(--accent-primary)" : "4px solid transparent",
-                color: activeTab === item.id ? "var(--text-main)" : "var(--text-muted)",
-                fontSize: "15px",
+                padding: "10px 16px",
+                fontSize: "13px",
                 fontWeight: activeTab === item.id ? "600" : "400",
                 display: "flex",
                 alignItems: "center",
                 gap: "12px",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                transition: "var(--transition-base)"
               }}
-              className="nav-item"
             >
-              <span style={{ fontSize: "20px" }}>{item.icon}</span>
+              <span style={{ fontSize: "18px", opacity: activeTab === item.id ? 1 : 0.6 }}>{item.icon}</span>
               {item.label}
             </button>
           ))}
         </nav>
 
-        <div style={{ padding: "20px", fontSize: "11px", color: "var(--text-muted)", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          &copy; 2026 Bizness Software<br />Offline POS v1.0
+        <div style={{ padding: "16px", borderTop: "1px solid var(--border-glass)" }}>
+          <div style={{ 
+              background: "rgba(255,255,255,0.03)", 
+              border: "1px solid rgba(255,255,255,0.1)", 
+              borderRadius: "12px", 
+              padding: "12px", 
+              backdropFilter: "blur(5px)"
+          }}>
+              <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.4)", fontWeight: "900", marginBottom: "3px" }}>DEVELOPED BY</div>
+              <div style={{ 
+                  fontSize: "11px", 
+                  color: "#00ff88", 
+                  fontWeight: "900", 
+                  marginBottom: "6px"
+              }}>BIZNES SOFTWARE</div>
+              
+              <div style={{ fontSize: "10px", color: "#ff4d4d", fontWeight: "900", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ fontSize: "10px" }}>📞</span> 08867592382
+              </div>
+
+              <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "8px 0" }}></div>
+
+              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontWeight: "800" }}>
+                  VERSION <span style={{ color: "#ffff00" }}>v4.2 PRO</span>
+              </div>
+          </div>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <main style={{ flex: 1, height: "100vh", overflowY: "auto", background: "rgba(0,0,0,0.1)" }}>
-        {renderContent()}
+      <main style={{ flex: 1, height: "100vh", overflowY: "hidden", position: "relative" }}>
+        <div className="page-container" style={{ height: "100%", padding: "12px", overflowY: "auto" }}>
+          {renderContent()}
+        </div>
       </main>
     </div>
   );
