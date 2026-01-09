@@ -1,4 +1,4 @@
-export const menuData = [
+const menuData = [
     {
         category: "Tandoor & Breads",
         emoji: "🔥",
@@ -270,3 +270,5 @@ export const menuData = [
         ],
     },
 ];
+
+module.exports = { menuData };

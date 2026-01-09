@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+try {
+    ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+} catch (e) {
+    console.error("Chart registration failed:", e);
+}
 
 export default function ReportsPage() {
     const [salesData, setSalesData] = useState([]);
@@ -12,16 +16,29 @@ export default function ReportsPage() {
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!window.api) {
+                setSalesData([
+                    { date: "2024-01-01", amount: 1200 }, { date: "2024-01-02", amount: 1500 },
+                    { date: "2024-01-03", amount: 1100 }, { date: "2024-01-04", amount: 1900 }
+                ]);
+                setCategorySales([
+                    { category: "Chinese", amount: 5000 },
+                    { category: "South Indian", amount: 3000 },
+                    { category: "Snacks", amount: 1500 }
+                ]);
+                setLoading(false);
+                return;
+            }
             setLoading(true);
             try {
                 const [sales, cats] = await Promise.all([
                     window.api.getSalesData(period),
                     window.api.getCategorySales()
                 ]);
-                setSalesData(sales.reverse());
-                setCategorySales(cats);
+                setSalesData((sales || []).reverse());
+                setCategorySales(cats || []);
             } catch (err) {
-                console.error(err);
+                console.error("Reports data load failed:", err);
             }
             setLoading(false);
         };
@@ -31,79 +48,124 @@ export default function ReportsPage() {
     const barData = {
         labels: salesData.map(d => d.date),
         datasets: [{
-            label: 'Sales (₹)',
+            label: 'Revenue',
             data: salesData.map(d => d.amount),
-            backgroundColor: 'rgba(14, 165, 233, 0.6)',
-            borderColor: '#0ea5e9',
-            borderWidth: 1
+            backgroundColor: 'rgba(56, 189, 248, 0.4)',
+            hoverBackgroundColor: '#38bdf8',
+            borderRadius: 6,
+            borderSkipped: false
         }]
     };
 
     const catData = {
         labels: categorySales.map(d => d.category),
         datasets: [{
-            label: 'Total Revenue (₹)',
+            label: 'Revenue',
             data: categorySales.map(d => d.amount),
-            backgroundColor: 'rgba(16, 185, 129, 0.6)',
-            borderColor: '#10b981',
-            borderWidth: 1
+            backgroundColor: 'rgba(34, 211, 238, 0.4)',
+            hoverBackgroundColor: '#22d3ee',
+            borderRadius: 6,
+            borderSkipped: false
         }]
     };
 
     return (
-        <div style={{ padding: "24px", color: "var(--text-main)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+        <div style={{ padding: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "16px" }}>
                 <div>
-                    <h1 style={{ margin: 0, fontSize: "24px" }}>📊 Reports & Insights</h1>
-                    <p style={{ color: "var(--text-muted)", margin: "4px 0 0 0" }}>Detailed sales performance analysis</p>
+                    <h1 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "2px" }}>Business Intelligence</h1>
+                    <p style={{ color: "var(--text-dim)", fontSize: "12px" }}>Deep dive into sales and category trends</p>
                 </div>
-                <div style={{ display: "flex", gap: "8px" }}>
+                <div style={{ display: "flex", gap: "2px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "10px", border: "1px solid var(--border-glass)" }}>
                     <button 
                         onClick={() => setPeriod('daily')}
-                        className={period === 'daily' ? 'btn-primary' : 'btn-secondary'}
-                        style={{ padding: "8px 16px", fontSize: "12px" }}
+                        style={{ 
+                            padding: "6px 16px", 
+                            fontSize: "12px", 
+                            borderRadius: "6px",
+                            background: period === 'daily' ? 'var(--grad-primary)' : 'transparent',
+                            color: period === 'daily' ? 'white' : 'var(--text-muted)'
+                        }}
                     >
                         Daily
                     </button>
                     <button 
                         onClick={() => setPeriod('monthly')}
-                        className={period === 'monthly' ? 'btn-primary' : 'btn-secondary'}
-                        style={{ padding: "8px 16px", fontSize: "12px" }}
+                        style={{ 
+                            padding: "6px 16px", 
+                            fontSize: "12px", 
+                            borderRadius: "6px",
+                            background: period === 'monthly' ? 'var(--grad-primary)' : 'transparent',
+                            color: period === 'monthly' ? 'white' : 'var(--text-muted)'
+                        }}
                     >
                         Monthly
                     </button>
                 </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "24px" }}>
-                <div className="glass-panel" style={{ padding: "20px" }}>
-                    <h3 style={{ marginTop: 0, marginBottom: "20px", fontSize: "16px" }}>
-                        {period === 'daily' ? 'Last 30 Days' : 'Last 12 Months'} Revenue
-                    </h3>
-                    <div style={{ height: "300px" }}>
-                        {salesData.length > 0 ? (
-                            <Bar data={barData} options={{ maintainAspectRatio: false }} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
+                <div className="glass-panel" style={{ padding: "16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                        <h3 style={{ fontSize: "15px", margin: 0 }}>
+                            {period === 'daily' ? '30-Day Performance' : '12-Month Performance'}
+                        </h3>
+                        <div style={{ fontSize: "11px", color: "var(--text-dim)" }}>
+                            Avg: <span style={{ color: "var(--text-main)", fontWeight: "600" }}>₹{(salesData.reduce((a, b) => a + b.amount, 0) / (salesData.length || 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                        </div>
+                    </div>
+                    
+                    <div style={{ height: "350px" }}>
+                        {loading ? (
+                             <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <div style={{ width: "30px", height: "30px", border: "2px solid rgba(56, 189, 248, 0.1)", borderTopColor: "var(--accent-primary)", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
+                            </div>
+                        ) : salesData.length > 0 ? (
+                            <Bar data={barData} options={{ 
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: { 
+                                    y: { grid: { color: "rgba(255,255,255,0.03)" }, ticks: { color: "var(--text-dim)", font: { family: 'Outfit', size: 10 } } },
+                                    x: { grid: { display: false }, ticks: { color: "var(--text-dim)", font: { family: 'Outfit', size: 10 } } }
+                                }
+                            }} />
                         ) : (
-                            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
-                                No sales data available for this period.
+                            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-dim)", fontSize: "14px" }}>
+                                No transactions recorded for this period.
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div className="glass-panel" style={{ padding: "20px" }}>
-                    <h3 style={{ marginTop: 0, marginBottom: "20px", fontSize: "16px" }}>Sales by Category</h3>
-                    <div style={{ height: "300px" }}>
-                        {categorySales.length > 0 ? (
-                            <Bar data={catData} options={{ maintainAspectRatio: false, indexAxis: 'y' }} />
+                <div className="glass-panel" style={{ padding: "16px" }}>
+                    <h3 style={{ fontSize: "15px", marginBottom: "20px", margin: 0 }}>Categorical Revenue Distribution</h3>
+                    <div style={{ height: "400px" }}>
+                        {loading ? (
+                            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <div style={{ width: "30px", height: "30px", border: "2px solid rgba(56, 189, 248, 0.1)", borderTopColor: "var(--accent-primary)", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
+                            </div>
+                        ) : categorySales.length > 0 ? (
+                            <Bar data={catData} options={{ 
+                                maintainAspectRatio: false, 
+                                indexAxis: 'y',
+                                plugins: { legend: { display: false } },
+                                scales: { 
+                                    x: { grid: { color: "rgba(255,255,255,0.03)" }, ticks: { color: "var(--text-dim)", font: { family: 'Outfit', size: 10 } } },
+                                    y: { grid: { display: false }, ticks: { color: "var(--text-main)", font: { family: 'Outfit', size: 11, weight: '500' } } }
+                                }
+                            }} />
                         ) : (
-                            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
-                                No category data available.
+                            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-dim)", fontSize: "14px" }}>
+                                Waiting for category data...
                             </div>
                         )}
                     </div>
                 </div>
             </div>
+            
+            <style>{`
+                @keyframes spin { to { transform: rotate(360deg); } }
+            `}</style>
         </div>
     );
 }

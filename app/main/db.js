@@ -133,34 +133,29 @@ const dbFunctions = {
     db.prepare("DELETE FROM menu_items WHERE id = ?").run(id),
 
   // Seed Menu if empty
-  seedMenu: (menuData) => {
-    const count = db
-      .prepare("SELECT COUNT(*) as count FROM categories")
-      .get().count;
-    if (count > 0) return;
+  seedMenu: (menuData, force = false) => {
+    if (force) {
+      db.prepare("DELETE FROM bill_items").run();
+      db.prepare("DELETE FROM bills").run();
+      db.prepare("DELETE FROM menu_items").run();
+      db.prepare("DELETE FROM categories").run();
+      console.log("Database cleared for re-seeding.");
+    }
+    const count = db.prepare("SELECT COUNT(*) as count FROM categories").get().count;
+    if (count > 0 && !force) return;
 
-    const insertCat = db.prepare(
-      "INSERT INTO categories (name, emoji) VALUES (?, ?)"
-    );
-    const insertItem = db.prepare(
-      "INSERT INTO menu_items (category_id, name, emoji, prices) VALUES (?, ?, ?, ?)"
-    );
+    console.log("Seeding database with default menu...");
+    menuData.forEach((cat) => {
+      const { lastInsertRowid: catId } = db
+        .prepare("INSERT INTO categories (name, emoji) VALUES (?, ?)")
+        .run(cat.category, cat.emoji || "📂");
 
-    const transaction = db.transaction((data) => {
-      for (const cat of data) {
-        const info = insertCat.run(cat.category, cat.emoji);
-        const catId = info.lastInsertRowid;
-        for (const item of cat.items) {
-          insertItem.run(
-            catId,
-            item.name,
-            item.emoji,
-            JSON.stringify(item.prices)
-          );
-        }
-      }
+      cat.items.forEach((item) => {
+        db.prepare(
+          "INSERT INTO menu_items (category_id, name, emoji, prices) VALUES (?, ?, ?, ?)"
+        ).run(catId, item.name, item.emoji || "🍽️", JSON.stringify(item.prices));
+      });
     });
-    transaction(menuData);
   },
 
   // Bill CRUD
@@ -187,7 +182,7 @@ const dbFunctions = {
       );
       const billId = info.lastInsertRowid;
       for (const item of itemsData) {
-        insertItem.run(billId, item.name, item.qty, item.price, item.qty_type);
+        insertItem.run(billId, item.name, item.qty, item.price, item.qtyType || item.qty_type);
       }
       return billId;
     });
@@ -208,7 +203,7 @@ const dbFunctions = {
         ORDER BY bills.created_at DESC LIMIT ?
     `
       )
-      .all(),
+      .all(limit),
 
   // Analytics
   getDailyStats: () => {

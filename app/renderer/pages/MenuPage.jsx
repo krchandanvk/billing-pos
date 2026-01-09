@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function MenuPage() {
     const [categories, setCategories] = useState([]);
@@ -9,11 +9,27 @@ export default function MenuPage() {
     const [newCat, setNewCat] = useState({ name: "", emoji: "📂" });
 
     const loadData = async () => {
+        if (!window.api) {
+            // MOCK DATA FOR WEB BROWSER MODE
+            const mockCats = [
+                { id: 1, name: "Chinese Veg", emoji: "🥢" },
+                { id: 2, name: "Snacks", emoji: "🍟" }
+            ];
+            const mockItems = [
+                { id: 101, category_id: 1, name: "Veg Chowmein", emoji: "🍜", prices: { half: 60, full: 120 } },
+                { id: 102, category_id: 1, name: "Veg Fried Rice", emoji: "🍚", prices: { half: 60, full: 120 } },
+                { id: 201, category_id: 2, name: "Paneer Pakora", emoji: "🧀", prices: { plate: 180 } }
+            ];
+            setCategories(mockCats);
+            setItems(mockItems);
+            setSelectedCatId(1);
+            return;
+        }
         const cats = await window.api.getCategories();
         const allItems = await window.api.getMenuItems();
-        setCategories(cats);
-        setItems(allItems.map(i => ({ ...i, prices: JSON.parse(i.prices) })));
-        if (cats.length > 0 && !selectedCatId) setSelectedCatId(cats[0].id);
+        setCategories(cats || []);
+        setItems((allItems || []).map(i => ({ ...i, prices: typeof i.prices === 'string' ? JSON.parse(i.prices) : i.prices })));
+        if (cats && cats.length > 0) setSelectedCatId(cats[0].id);
     };
 
     useEffect(() => {
@@ -29,7 +45,6 @@ export default function MenuPage() {
 
     const handleAddItem = async () => {
         if (!newItem.name || !selectedCatId) return;
-        // Clean prices (remove empty)
         const cleanedPrices = {};
         Object.entries(newItem.prices).forEach(([k, v]) => {
             if (v) cleanedPrices[k] = parseFloat(v);
@@ -47,169 +62,201 @@ export default function MenuPage() {
     };
 
     const handleDeleteItem = async (id) => {
-        if (confirm("Delete this item?")) {
+        if (confirm("Permanently archive this product?")) {
             await window.api.deleteMenuItem(id);
             loadData();
         }
     };
 
     const handleDeleteCategory = async (id) => {
-        if (confirm("Delete this category and all its items?")) {
+        if (confirm("Archiving this category will hide all associated catalog items. Proceed?")) {
             await window.api.deleteCategory(id);
             loadData();
         }
     };
 
     return (
-        <div style={{ padding: "24px", color: "var(--text-main)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+        <div style={{ padding: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "16px" }}>
                 <div>
-                    <h1 style={{ margin: 0, fontSize: "24px" }}>📋 Menu Management</h1>
-                    <p style={{ color: "var(--text-muted)", margin: "4px 0 0 0" }}>Manage your restaurant menu and pricing</p>
+                    <h1 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "2px" }}>Product Catalog</h1>
+                    <p style={{ color: "var(--text-dim)", fontSize: "12px" }}>Manage menu clusters and pricing variants</p>
                 </div>
-                <button onClick={() => setShowItemForm(true)} className="btn-primary" style={{ padding: "10px 20px" }}>
-                    + Add New Item
+                <button onClick={() => setShowItemForm(true)} className="btn-primary" style={{ padding: "8px 16px", borderRadius: "8px", fontSize: "13px" }}>
+                    <span>➕</span> Register Product
                 </button>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: "24px" }}>
-                {/* Categories Sidebar */}
-                <div className="glass-panel" style={{ padding: "16px" }}>
-                    <h3 style={{ marginTop: 0, fontSize: "16px", marginBottom: "16px" }}>Categories</h3>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        {categories.map(cat => (
-                            <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <button
-                                    onClick={() => setSelectedCatId(cat.id)}
-                                    style={{
-                                        flex: 1,
-                                        padding: "10px",
-                                        textAlign: "left",
-                                        background: selectedCatId === cat.id ? "rgba(14, 165, 233, 0.15)" : "transparent",
-                                        border: "none",
-                                        borderRadius: "6px",
-                                        color: selectedCatId === cat.id ? "var(--accent-primary)" : "var(--text-muted)",
-                                        cursor: "pointer"
-                                    }}
-                                >
-                                    {cat.emoji} {cat.name}
-                                </button>
-                                <button onClick={() => handleDeleteCategory(cat.id)} style={{ background: "transparent", color: "#f43f5e", border: "none", cursor: "pointer" }}>✕</button>
-                            </div>
-                        ))}
+            <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: "12px", height: "calc(100vh - 120px)" }}>
+                {/* Categories Navigation */}
+                <div className="glass-panel" style={{ display: "flex", flexDirection: "column", background: "rgba(15, 23, 42, 0.4)" }}>
+                    <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border-glass)" }}>
+                        <h3 style={{ margin: 0, fontSize: "11px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "1px" }}>Clusters</h3>
+                    </div>
+                    
+                    <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                            {categories.map(cat => (
+                                <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                    <button
+                                        onClick={() => setSelectedCatId(cat.id)}
+                                        className={`nav-item ${selectedCatId === cat.id ? 'active' : ''}`}
+                                        style={{
+                                            flex: 1,
+                                            padding: "12px 16px",
+                                            borderRadius: "10px",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "12px",
+                                            fontSize: "14px"
+                                        }}
+                                    >
+                                        <span style={{ fontSize: "18px" }}>{cat.emoji}</span>
+                                        {cat.name}
+                                    </button>
+                                    <button 
+                                        onClick={() => handleDeleteCategory(cat.id)} 
+                                        style={{ background: "transparent", color: "var(--text-dim)", padding: "10px", borderRadius: "10px" }}
+                                        className="btn-icon"
+                                    >✕</button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                        <input 
-                            placeholder="New Category Name" 
-                            value={newCat.name}
-                            onChange={e => setNewCat({...newCat, name: e.target.value})}
-                            style={inputStyle}
-                        />
-                        <button onClick={handleAddCategory} className="btn-secondary" style={{ width: "100%", marginTop: "8px" }}>Add Category</button>
+                    <div style={{ padding: "20px", borderTop: "1px solid var(--border-glass)", background: "rgba(0,0,0,0.2)" }}>
+                        <p style={{ margin: "0 0 12px 0", fontSize: "12px", color: "var(--text-muted)" }}>Manual Entry</p>
+                        <div style={{ display: "flex", gap: "8px" }}>
+                            <input 
+                                placeholder="Group Name..." 
+                                value={newCat.name}
+                                onChange={e => setNewCat({...newCat, name: e.target.value})}
+                                style={{ flex: 1, padding: "8px 12px", fontSize: "13px" }}
+                            />
+                            <button onClick={handleAddCategory} className="btn-secondary" style={{ padding: "8px", borderRadius: "8px" }}>➕</button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Items List */}
-                <div className="glass-panel" style={{ padding: "20px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                        <h3 style={{ margin: 0, fontSize: "18px" }}>
-                            {categories.find(c => c.id === selectedCatId)?.name || "Select Category"} Items
+                {/* Items Manifest */}
+                <div className="glass-panel" style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                    <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border-glass)", background: "rgba(15, 23, 42, 0.4)" }}>
+                        <h3 style={{ margin: 0, fontSize: "16px", color: "var(--text-main)" }}>
+                            {categories.find(c => c.id === selectedCatId)?.name || "Primary"} Inventory
                         </h3>
                     </div>
 
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                        <thead>
-                            <tr style={{ textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                                <th style={{ padding: "12px" }}>Item</th>
-                                <th style={{ padding: "12px" }}>Prices</th>
-                                <th style={{ padding: "12px", textAlign: "right" }}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.filter(i => i.category_id === selectedCatId).map(item => (
-                                <tr key={item.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                                    <td style={{ padding: "12px" }}>
-                                        <span style={{ fontSize: "20px", marginRight: "10px" }}>{item.emoji}</span>
-                                        {item.name}
-                                    </td>
-                                    <td style={{ padding: "12px" }}>
-                                        {Object.entries(item.prices).map(([type, price]) => (
-                                            <span key={type} style={{ marginRight: "10px", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: "4px", fontSize: "12px" }}>
-                                                {type}: ₹{price}
-                                            </span>
-                                        ))}
-                                    </td>
-                                    <td style={{ padding: "12px", textAlign: "right" }}>
-                                        <button onClick={() => handleDeleteItem(item.id)} className="btn-icon btn-danger">🗑️</button>
-                                    </td>
+                    <div style={{ flex: 1, overflowY: "auto" }}>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Article Name</th>
+                                    <th>Unit Valuation</th>
+                                    <th style={{ textAlign: "right" }}>Control</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {items.filter(i => i.category_id === selectedCatId).map((item, idx) => (
+                                    <tr key={item.id} style={{ animation: "fadeIn 0.3s ease-out forwards", animationDelay: `${idx * 0.05}s`, opacity: 0 }}>
+                                        <td style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                                            <div style={{ width: "40px", height: "40px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>{item.emoji}</div>
+                                            <div style={{ fontWeight: "600" }}>{item.name}</div>
+                                        </td>
+                                        <td>
+                                            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                                                {Object.entries(item.prices || {}).map(([type, price]) => (
+                                                    <div key={type} style={{ background: "rgba(56, 189, 248, 0.1)", color: "var(--accent-primary)", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "600" }}>
+                                                        <span style={{ opacity: 0.6, textTransform: "uppercase" }}>{type}</span>: ₹{price}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </td>
+                                        <td style={{ textAlign: "right" }}>
+                                            <button onClick={() => handleDeleteItem(item.id)} className="btn-icon btn-danger" style={{ borderRadius: "10px" }}>🗑️</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             {/* Modal for adding/editing item */}
             {showItemForm && (
                 <div style={modalOverlayStyle}>
-                    <div className="glass-panel" style={{ width: "400px", padding: "24px" }}>
-                        <h2 style={{ marginTop: 0 }}>Add New Item</h2>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                            <label style={{ fontSize: "12px", color: "var(--text-muted)" }}>Item Name</label>
-                            <input 
-                                value={newItem.name}
-                                onChange={e => setNewItem({...newItem, name: e.target.value})}
-                                style={inputStyle}
-                            />
+                    <div className="glass-panel" style={{ width: "460px", padding: "32px", border: "1px solid var(--border-glass-bright)", boxShadow: "0 30px 60px rgba(0,0,0,0.6)" }}>
+                        <h2 style={{ fontSize: "22px", fontWeight: "700", marginBottom: "24px" }}>New Inventory Entry</h2>
+                        
+                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                            <div>
+                                <label style={labelStyle}>Article Official Name</label>
+                                <input 
+                                    placeholder="e.g. Arctic Berry Fusion"
+                                    value={newItem.name}
+                                    onChange={e => setNewItem({...newItem, name: e.target.value})}
+                                    style={{ width: "100%", marginTop: "6px" }}
+                                />
+                            </div>
                             
-                            <label style={{ fontSize: "12px", color: "var(--text-muted)" }}>Emoji/Icon</label>
-                            <input 
-                                value={newItem.emoji}
-                                onChange={e => setNewItem({...newItem, emoji: e.target.value})}
-                                style={inputStyle}
-                            />
-
-                            <label style={{ fontSize: "12px", color: "var(--text-muted)" }}>Prices</label>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                                <input placeholder="Half Price" type="number" value={newItem.prices.half} onChange={e => setNewItem({...newItem, prices: {...newItem.prices, half: e.target.value}})} style={inputStyle} />
-                                <input placeholder="Full Price" type="number" value={newItem.prices.full} onChange={e => setNewItem({...newItem, prices: {...newItem.prices, full: e.target.value}})} style={inputStyle} />
+                            <div style={{ display: "grid", gridTemplateColumns: "80px 1fr", gap: "12px" }}>
+                                <div>
+                                    <label style={labelStyle}>Icon</label>
+                                    <input value={newItem.emoji} onChange={e => setNewItem({...newItem, emoji: e.target.value})} style={{ width: "100%", marginTop: "6px", textAlign: "center", fontSize: "20px" }} />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Parent Cluster</label>
+                                    <select 
+                                        value={selectedCatId} 
+                                        onChange={e => setSelectedCatId(parseInt(e.target.value))}
+                                        style={{ width: "100%", marginTop: "6px" }}
+                                    >
+                                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>
+                                </div>
                             </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                                <input placeholder="Plate Price" type="number" value={newItem.prices.plate} onChange={e => setNewItem({...newItem, prices: {...newItem.prices, plate: e.target.value}})} style={inputStyle} />
-                                <input placeholder="Pc Price" type="number" value={newItem.prices.pc} onChange={e => setNewItem({...newItem, prices: {...newItem.prices, pc: e.target.value}})} style={inputStyle} />
+
+                            <div>
+                                <label style={labelStyle}>Pricing Structure (variants)</label>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "6px" }}>
+                                    <input placeholder="Half (₹)" type="number" value={newItem.prices.half} onChange={e => setNewItem({...newItem, prices: {...newItem.prices, half: e.target.value}})} />
+                                    <input placeholder="Full (₹)" type="number" value={newItem.prices.full} onChange={e => setNewItem({...newItem, prices: {...newItem.prices, full: e.target.value}})} />
+                                    <input placeholder="Plate (₹)" type="number" value={newItem.prices.plate} onChange={e => setNewItem({...newItem, prices: {...newItem.prices, plate: e.target.value}})} />
+                                    <input placeholder="Piece (₹)" type="number" value={newItem.prices.pc} onChange={e => setNewItem({...newItem, prices: {...newItem.prices, pc: e.target.value}})} />
+                                </div>
                             </div>
 
-                            <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
-                                <button onClick={handleAddItem} className="btn-primary" style={{ flex: 1 }}>Save</button>
-                                <button onClick={() => setShowItemForm(false)} className="btn-secondary" style={{ flex: 1 }}>Cancel</button>
+                            <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+                                <button onClick={handleAddItem} className="btn-primary" style={{ flex: 1, padding: "14px" }}>Register Product</button>
+                                <button onClick={() => setShowItemForm(false)} className="btn-secondary" style={{ flex: 0.5 }}>Dismiss</button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
+            
+            <style>{`
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+            `}</style>
         </div>
     );
 }
 
-const inputStyle = {
-    width: "100%",
-    padding: "10px",
-    borderRadius: "6px",
-    border: "1px solid rgba(255,255,255,0.1)",
-    background: "rgba(0,0,0,0.2)",
-    color: "white",
-    fontSize: "14px",
-    outline: "none"
+const labelStyle = {
+    fontSize: "11px",
+    color: "var(--text-dim)",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+    fontWeight: "600"
 };
 
 const modalOverlayStyle = {
     position: "fixed",
     top: 0, left: 0, right: 0, bottom: 0,
-    background: "rgba(0,0,0,0.7)",
+    background: "rgba(0,0,0,0.8)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1000,
-    backdropFilter: "blur(5px)"
+    backdropFilter: "blur(12px)"
 };

@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const { initDb, dbFunctions } = require("./db");
-const { menuData } = require("../renderer/data/menu");
+const { menuData } = require("./seedData");
 
 // Initialize Database
 initDb();
