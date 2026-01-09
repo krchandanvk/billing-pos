@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, dialog, Menu } = require("electron");
+Menu.setApplicationMenu(null); // Remove default menu bar (File, Edit, Help, etc.)
 const path = require("path");
 const { initDb, dbFunctions } = require("./db");
 const { menuData } = require("./seedData");
@@ -37,8 +38,12 @@ ipcMain.handle("print-bill", (event, billData) => {
       fs.mkdirSync(saveDir, { recursive: true });
     }
 
-    // 2. Generate Filename: Just bill number as JPG (e.g., "01.jpg")
-    const filename = `${billData.billNo || 'DRAFT'}.jpg`;
+    // 2. Generate Filename: BillNo_Date_Time.jpg (e.g., "68_09-Jan-2026_8-05pm.jpg")
+    const billTimestamp = billData.timestamp ? new Date(billData.timestamp) : new Date();
+    const dateStr = billTimestamp.toLocaleString('en-IN', { dateStyle: 'medium' }).replace(/\s/g, '-');
+    const timeStr = billTimestamp.toLocaleString('en-IN', { timeStyle: 'short' }).replace(/\s/g, '').replace(':', '-').toLowerCase();
+    
+    const filename = `${billData.billNo || 'DRAFT'}_${dateStr}_${timeStr}.jpg`;
     const filePath = path.join(saveDir, filename);
 
     const printWin = new BrowserWindow({
@@ -86,7 +91,8 @@ ipcMain.handle("print-bill", (event, billData) => {
                     payment_mode: billData.paymentMode || 'Cash',
                     image_path: filePath
                 };
-                dbFunctions.addBill(billToSave, billData.items);
+                // Pass the timestamp to ensure database uses the same timestamp as printed bill
+                dbFunctions.addBill(billToSave, billData.items, billData.timestamp);
                 } catch (dbErr) {
                 console.error("Failed to archive bill:", dbErr);
                 }

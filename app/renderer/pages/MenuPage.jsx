@@ -93,12 +93,12 @@ export default function MenuPage() {
 
     return (
         <div style={{ padding: "8px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "16px" }}>
-                <div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "16px", marginBottom: "24px" }}>
+                <div style={{ textAlign: "left" }}>
                     <h1 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "2px" }}>Product Catalog</h1>
                     <p style={{ color: "var(--text-dim)", fontSize: "12px" }}>Manage menu clusters and pricing variants</p>
                 </div>
-                <button onClick={() => setShowItemForm(true)} className="btn-primary" style={{ padding: "8px 16px", borderRadius: "8px", fontSize: "13px" }}>
+                <button onClick={() => setShowItemForm(true)} className="btn-primary" style={{ padding: "8px 16px", borderRadius: "8px", fontSize: "13px", justifyContent: "flex-start" }}>
                     <span>➕</span> Register Product
                 </button>
             </div>
@@ -123,12 +123,13 @@ export default function MenuPage() {
                                             borderRadius: "10px",
                                             display: "flex",
                                             alignItems: "center",
-                                            gap: "8px",
+                                            justifyContent: "flex-start",
+                                            gap: "12px",
                                             fontSize: "14px"
                                         }}
                                     >
-                                        <span style={{ fontSize: "16px" }}>{cat.emoji}</span>
-                                        {cat.name}
+                                        <div style={{ width: "24px", display: "flex", justifyContent: "flex-start", fontSize: "16px" }}>{cat.emoji}</div>
+                                        <span style={{ fontWeight: selectedCatId === cat.id ? "700" : "500", textAlign: "left" }}>{cat.name}</span>
                                     </button>
                                     <button 
                                         onClick={() => handleDeleteCategory(cat.id)} 
@@ -166,31 +167,31 @@ export default function MenuPage() {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Article Name</th>
-                                    <th>Unit Valuation</th>
-                                    <th style={{ textAlign: "right" }}>Control</th>
+                                    <th style={{ textAlign: "left" }}>Article Name</th>
+                                    <th style={{ textAlign: "left" }}>Unit Valuation</th>
+                                    <th style={{ textAlign: "left" }}>Control</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {items.filter(i => i.category_id === selectedCatId).map((item, idx) => (
                                     <tr key={item.id} style={{ animation: "fadeIn 0.3s ease-out forwards", animationDelay: `${idx * 0.05}s`, opacity: 0 }}>
-                                        <td>
+                                        <td style={{ textAlign: "left" }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                                <div style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.03)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>{item.emoji}</div>
-                                                <div style={{ fontWeight: "600" }}>{item.name}</div>
+                                                <div style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.03)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "flex-start", fontSize: "18px" }}>{item.emoji}</div>
+                                                <div style={{ fontWeight: "600", textAlign: "left" }}>{item.name}</div>
                                             </div>
                                         </td>
-                                        <td>
-                                            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                                        <td style={{ textAlign: "left" }}>
+                                            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "flex-start" }}>
                                                 {Object.entries(item.prices || {}).map(([type, price]) => (
-                                                    <div key={type} style={{ background: "rgba(56, 189, 248, 0.1)", color: "var(--accent-primary)", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "600" }}>
+                                                    <div key={type} style={{ background: "rgba(56, 189, 248, 0.1)", color: "var(--accent-primary)", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "600", textAlign: "left" }}>
                                                         <span style={{ opacity: 0.6, textTransform: "uppercase" }}>{type}</span>: ₹{price}
                                                     </div>
                                                 ))}
                                             </div>
                                         </td>
-                                        <td style={{ textAlign: "right" }}>
-                                            <button onClick={() => handleDeleteItem(item.id)} className="btn-icon btn-danger" style={{ borderRadius: "10px" }}>🗑️</button>
+                                        <td style={{ textAlign: "left" }}>
+                                            <button onClick={() => handleDeleteItem(item.id)} className="btn-icon btn-danger" style={{ borderRadius: "10px", justifyContent: "center" }}>🗑️</button>
                                         </td>
                                     </tr>
                                 ))}

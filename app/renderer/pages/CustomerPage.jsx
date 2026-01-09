@@ -119,35 +119,52 @@ export default function CustomerPage() {
                             <tr>
                                 <th>Client Name</th>
                                 <th>Contact Number</th>
-                                <th>Preference Profile</th>
-                                <th style={{ textAlign: "right" }}>Status</th>
+                                <th>Expenditure</th>
+                                <th>Visits</th>
+                                <th>Last Visit</th>
+                                <th style={{ textAlign: "right" }}>Marketing</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="4" style={{ padding: "60px", textAlign: "center" }}>
+                                <tr><td colSpan="7" style={{ padding: "60px", textAlign: "center" }}>
                                     <div style={{ width: "24px", height: "24px", border: "2px solid rgba(56, 189, 248, 0.1)", borderTopColor: "var(--accent-primary)", borderRadius: "50%", animation: "spin 1s linear infinite", display: "inline-block" }}></div>
                                 </td></tr>
                             ) : filtered.length === 0 ? (
-                                <tr><td colSpan="4" style={{ padding: "60px", textAlign: "center", color: "var(--text-dim)" }}>No guest records found matching these criteria.</td></tr>
+                                <tr><td colSpan="7" style={{ padding: "60px", textAlign: "center", color: "var(--text-dim)" }}>No guest records found matching these criteria.</td></tr>
                             ) : filtered.map((c, idx) => (
                                 <tr key={c.id} style={{ animation: "fadeIn 0.3s ease-out forwards", animationDelay: `${idx * 0.05}s`, opacity: 0 }}>
-                                    <td style={{ fontWeight: "600" }}>{c.name}</td>
+                                    <td style={{ fontWeight: "600" }}>
+                                        {c.name}
+                                        <div style={{ fontSize: "10px", color: "var(--text-dim)", fontWeight: "400" }}>{c.notes || "No notes"}</div>
+                                    </td>
                                     <td style={{ color: "var(--accent-primary)", fontWeight: "500" }}>{c.mobile}</td>
-                                    <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>{c.notes || <span style={{ opacity: 0.4 }}>No recorded preferences</span>}</td>
+                                    <td style={{ fontWeight: "700", color: "var(--accent-success)" }}>₹{(c.total_spent || 0).toLocaleString()}</td>
+                                    <td style={{ fontWeight: "600" }}>{c.visits_count || 0}</td>
+                                    <td style={{ color: "var(--text-muted)", fontSize: "12px" }}>
+                                        {c.last_visit ? new Date(c.last_visit).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : "Never"}
+                                    </td>
                                     <td style={{ textAlign: "right" }}>
-                                        <span style={{ 
-                                            background: "rgba(16, 185, 129, 0.1)", 
-                                            color: "var(--accent-success)", 
-                                            padding: "4px 10px", 
-                                            borderRadius: "20px", 
-                                            fontSize: "11px", 
-                                            fontWeight: "600",
-                                            textTransform: "uppercase",
-                                            letterSpacing: "0.5px"
-                                        }}>
-                                            Active Member
-                                        </span>
+                                        <a 
+                                            href={`https://wa.me/91${c.mobile}`} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            style={{ 
+                                                background: "rgba(37, 211, 102, 0.1)", 
+                                                color: "#25D366", 
+                                                padding: "6px 12px", 
+                                                borderRadius: "8px", 
+                                                fontSize: "11px", 
+                                                fontWeight: "700",
+                                                textDecoration: "none",
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                gap: "5px",
+                                                border: "1px solid rgba(37, 211, 102, 0.2)"
+                                            }}
+                                        >
+                                            <span style={{ fontSize: "14px" }}>💬</span> WhatsApp
+                                        </a>
                                     </td>
                                 </tr>
                             ))}

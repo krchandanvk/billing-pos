@@ -6,6 +6,7 @@ import DashboardPage from "./pages/DashboardPage";
 import MenuPage from "./pages/MenuPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
+import AboutBizness from "./components/AboutBizness";
 import hotelLogo from "./assets/hotel_logo.png";
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
     { id: "analytics", label: "Analytics", icon: "📊" },
     { id: "reports", label: "Reports", icon: "📈" },
     { id: "settings", label: "Settings", icon: "⚙️" },
+    { id: "help", label: "Help", icon: "❓" },
   ];
 
   const renderContent = () => {
@@ -34,6 +36,7 @@ export default function App() {
       case "analytics": return <DashboardPage />;
       case "reports": return <ReportsPage />;
       case "settings": return <SettingsPage />;
+      case "help": return <AboutBizness />;
       default: return <BillingPage />;
     }
   };
@@ -49,7 +52,7 @@ export default function App() {
       {/* Sidebar Navigation */}
       {/* Sidebar Navigation */}
       <div className="glass-panel" style={{ width: "200px", borderRadius: "0", borderTop: "none", borderLeft: "none", borderBottom: "none", display: "flex", flexDirection: "column", padding: "20px 0", background: "rgba(15, 23, 42, 0.4)" }}>
-        <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", marginBottom: "24px", textAlign: "center" }}>
+        <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "8px", marginBottom: "24px", textAlign: "left" }}>
           <img src={hotelLogo} alt="Logo" style={{ width: "60px", height: "60px", objectFit: "contain", filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.3))" }} />
           <div>
             <h1 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "var(--text-main)", letterSpacing: "-0.5px", lineHeight: "1.2" }}>Kallo's Tandon</h1>
@@ -65,16 +68,19 @@ export default function App() {
               className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
               style={{
                 width: "100%",
-                padding: "9px 14px",
+                padding: "12px 20px",
                 fontSize: "13px",
                 fontWeight: activeTab === item.id ? "600" : "400",
                 display: "flex",
                 alignItems: "center",
-                gap: "10px",
+                justifyContent: "flex-start",
+                gap: "12px",
                 transition: "var(--transition-base)"
               }}
             >
-              <span style={{ fontSize: "18px", opacity: activeTab === item.id ? 1 : 0.6 }}>{item.icon}</span>
+              <div style={{ width: "24px", display: "flex", justifyContent: "flex-start", opacity: activeTab === item.id ? 1 : 0.6 }}>
+                <span style={{ fontSize: "18px" }}>{item.icon}</span>
+              </div>
               {item.label}
             </button>
           ))}
@@ -107,8 +113,8 @@ export default function App() {
                   onMouseLeave={(e) => e.target.style.textDecoration = "none"}
               >BIZNES SOFTWARE</a>
               
-              <div style={{ fontSize: "10px", color: "#ff4d4d", fontWeight: "900", display: "flex", alignItems: "center", gap: "4px" }}>
-                  <span style={{ fontSize: "10px" }}>📞</span> 08867592382
+              <div style={{ fontSize: "10px", color: "#00ff88", fontWeight: "900", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ fontSize: "10px" }}>💬</span> 8722744085
               </div>
 
               <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "8px 0" }}></div>

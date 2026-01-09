@@ -107,12 +107,9 @@
 
     <!-- BILL META -->
     <div style="margin-top: 6px;">
-        <div class="meta-text">
-            <span>BILL NO : <span id="bill-no">23</span></span>
-            <span>DT : <span id="date">03/01/26</span> TM: <span id="time">19:58:52</span></span>
-        </div>
-        <div class="meta-text">
-            <span>NAME : <span id="customer-name">CASH</span></span>
+        <div class="meta-text" style="font-weight: 900; font-size: 13px;">
+            <span>BILL ID: #<span id="bill-no">23</span></span>
+            <span id="formatted-date-time">09-Jan-2026, 8:05 pm</span>
         </div>
     </div>
 
@@ -220,9 +217,8 @@
             
             // Use billData timestamp if provided, otherwise use current time
             const billTime = data.timestamp ? new Date(data.timestamp) : new Date();
-            document.getElementById("date").innerText = billTime.toLocaleDateString("en-GB");
-            document.getElementById("time").innerText = billTime.toLocaleTimeString("en-GB", { hour12: false });
-            document.getElementById("customer-name").innerText = data.customerName || data.customerId || "CASH";
+            const ledgerFormat = billTime.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+            document.getElementById("formatted-date-time").innerText = ledgerFormat;
 
             const tbody = document.getElementById("items-body");
             tbody.innerHTML = "";

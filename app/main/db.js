@@ -15,6 +15,9 @@ function initDb() {
             name TEXT NOT NULL,
             mobile TEXT UNIQUE NOT NULL,
             notes TEXT,
+            total_spent REAL DEFAULT 0,
+            visits_count INTEGER DEFAULT 0,
+            last_visit DATETIME,
             created_at DATETIME DEFAULT (datetime('now', 'localtime'))
         )
     `);
@@ -90,7 +93,7 @@ const dbFunctions = {
     db.prepare("SELECT * FROM customers WHERE mobile = ?").get(mobile),
   addCustomer: (customer) => {
     const stmt = db.prepare(
-      "INSERT INTO customers (name, mobile, notes) VALUES (?, ?, ?)"
+      "INSERT INTO customers (name, mobile, notes, total_spent, visits_count) VALUES (?, ?, ?, 0, 0)"
     );
     return stmt.run(customer.name, customer.mobile, customer.notes);
   },
@@ -192,18 +195,41 @@ const dbFunctions = {
     
     return true;
   },
-  addBill: (bill, items) => {
-    const insertBill = db.prepare(`
-            INSERT INTO bills (bill_no, customer_id, subtotal, cgst, sgst, total, payment_mode, image_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-    const insertItem = db.prepare(`
-            INSERT INTO bill_items (bill_id, name, qty, price, qty_type)
-            VALUES (?, ?, ?, ?, ?)
-        `);
+  addBill: (bill, items, timestamp = null) => {
+  // If timestamp is provided, use it; otherwise let SQLite auto-generate
+  const insertBill = timestamp 
+    ? db.prepare(`
+          INSERT INTO bills (bill_no, customer_id, subtotal, cgst, sgst, total, payment_mode, image_path, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+    : db.prepare(`
+          INSERT INTO bills (bill_no, customer_id, subtotal, cgst, sgst, total, payment_mode, image_path)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+  const insertItem = db.prepare(`
+          INSERT INTO bill_items (bill_id, name, qty, price, qty_type)
+          VALUES (?, ?, ?, ?, ?)
+      `);
 
-    const transaction = db.transaction((billData, itemsData) => {
-      const info = insertBill.run(
+  const transaction = db.transaction((billData, itemsData, customTimestamp) => {
+    let info;
+    if (customTimestamp) {
+      // Use custom timestamp in ISO format for SQLite
+      info = insertBill.run(
+        billData.bill_no,
+        billData.customer_id,
+        billData.subtotal,
+        billData.cgst,
+        billData.sgst,
+        billData.total,
+        billData.payment_mode,
+        billData.image_path,
+        customTimestamp
+      );
+    } else {
+      // Let SQLite auto-generate timestamp
+      info = insertBill.run(
         billData.bill_no,
         billData.customer_id,
         billData.subtotal,
@@ -213,15 +239,29 @@ const dbFunctions = {
         billData.payment_mode,
         billData.image_path
       );
-      const billId = info.lastInsertRowid;
-      for (const item of itemsData) {
-        insertItem.run(billId, item.name, item.qty, item.price, item.qtyType || item.qty_type);
-      }
-      return billId;
-    });
+    }
+    
+    const billId = info.lastInsertRowid;
+    for (const item of itemsData) {
+      insertItem.run(billId, item.name, item.qty, item.price, item.qtyType || item.qty_type);
+    }
 
-    return transaction(bill, items);
-  },
+    // Update Customer Stats if linked
+    if (billData.customer_id) {
+        db.prepare(`
+            UPDATE customers 
+            SET total_spent = total_spent + ?, 
+                visits_count = visits_count + 1,
+                last_visit = ?
+            WHERE id = ?
+        `).run(billData.total, new Date().toISOString(), billData.customer_id);
+    }
+
+    return billId;
+  });
+
+  return transaction(bill, items, timestamp);
+},
 
   getBillItems: (billId) =>
     db.prepare("SELECT * FROM bill_items WHERE bill_id = ?").all(billId),
