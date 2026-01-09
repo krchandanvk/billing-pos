@@ -6,6 +6,7 @@ import DashboardPage from "./pages/DashboardPage";
 import MenuPage from "./pages/MenuPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
+import hotelLogo from "./assets/hotel_logo.png";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("billing");
@@ -46,12 +47,13 @@ export default function App() {
       )}
       
       {/* Sidebar Navigation */}
+      {/* Sidebar Navigation */}
       <div className="glass-panel" style={{ width: "200px", borderRadius: "0", borderTop: "none", borderLeft: "none", borderBottom: "none", display: "flex", flexDirection: "column", padding: "20px 0", background: "rgba(15, 23, 42, 0.4)" }}>
-        <div style={{ padding: "0 16px", display: "flex", alignItems: "center", gap: "10px", marginBottom: "32px" }}>
-          <div style={{ width: "36px", height: "36px", background: "var(--grad-primary)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", boxShadow: "var(--shadow-glow)" }}>🏪</div>
+        <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginBottom: "32px", textAlign: "center" }}>
+          <img src={hotelLogo} alt="Logo" style={{ width: "80px", height: "80px", objectFit: "contain", filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.3))" }} />
           <div>
-            <h1 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "var(--text-main)", letterSpacing: "-0.5px" }}>Veg Restaurant</h1>
-            <p style={{ margin: 0, fontSize: "10px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "1px" }}>Pure Veg POS</p>
+            <h1 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "var(--text-main)", letterSpacing: "-0.5px", lineHeight: "1.2" }}>Kallu's Tandon</h1>
+            <p style={{ margin: "5px 0 0 0", fontSize: "10px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "2px", fontWeight: "700" }}>Veg Restaurant</p>
           </div>
         </div>
 

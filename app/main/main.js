@@ -6,6 +6,7 @@ const { menuData } = require("./seedData");
 // Initialize Database
 initDb();
 dbFunctions.seedMenu(menuData);
+dbFunctions.pruneOldData(); // Auto-delete history older than 30 days
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -28,72 +29,94 @@ function createWindow() {
 
 const fs = require('fs');
 
-ipcMain.handle("print-bill", async (event, billData) => {
-  // 1. Setup Save Directory
-  const saveDir = path.join(app.getPath('documents'), 'Invoices');
-  if (!fs.existsSync(saveDir)) {
-    fs.mkdirSync(saveDir, { recursive: true });
-  }
+ipcMain.handle("print-bill", (event, billData) => {
+  return new Promise((resolve, reject) => {
+    // 1. Setup Save Directory
+    const saveDir = path.join(app.getPath('documents'), 'Invoices');
+    if (!fs.existsSync(saveDir)) {
+      fs.mkdirSync(saveDir, { recursive: true });
+    }
 
-  // 2. Generate Filename: [InvoiceNo]-[Amount].pdf
-  const dateStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-  const filename = `${billData.billNo || 'DRAFT'}_Amt-${Math.round(billData.total)}_${dateStr}.pdf`;
-  const filePath = path.join(saveDir, filename);
+    // 2. Generate Filename: [InvoiceNo]-[Amount].pdf
+    const dateStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+    const filename = `${billData.billNo || 'DRAFT'}_Amt-${Math.round(billData.total)}_${dateStr}.pdf`;
+    const filePath = path.join(saveDir, filename);
 
-  const printWin = new BrowserWindow({
-    show: false,
-    width: 350,
-    height: 2500,
-    webPreferences: { nodeIntegration: false, contextIsolation: true }
-  });
+    const printWin = new BrowserWindow({
+      show: false,
+      width: 350,
+      height: 2500,
+      webPreferences: { nodeIntegration: false, contextIsolation: true }
+    });
 
-  printWin.loadFile(path.join(__dirname, "../renderer/receipt.html"));
+    printWin.loadFile(path.join(__dirname, "../renderer/receipt.html"));
 
-  printWin.webContents.once("did-finish-load", async () => {
-    await printWin.webContents.executeJavaScript(`
-      window.billData = ${JSON.stringify(billData)};
-      if (typeof renderBill === 'function') renderBill();
-    `);
-
-    setTimeout(async () => {
+    printWin.webContents.once("did-finish-load", async () => {
       try {
-        // 5. Generate PDF
-        const pdfData = await printWin.webContents.printToPDF({
-            printBackground: true,
-            pageSize: { width: 80, height: 297 } // 80mm thermal paper width approx
-        });
-        
-        // 6. Save File
-        fs.writeFileSync(filePath, pdfData);
-        console.log("Bill saved as PDF:", filePath);
+        await printWin.webContents.executeJavaScript(`
+          window.billData = ${JSON.stringify(billData)};
+          if (typeof renderBill === 'function') renderBill();
+        `);
 
-        // 6.5 Save to Database
-        try {
-          const billToSave = {
-            bill_no: billData.billNo || '23',
-            customer_id: billData.customerId || null,
-            subtotal: billData.subtotal,
-            cgst: billData.cgst,
-            sgst: billData.sgst,
-            total: billData.total,
-            payment_mode: billData.paymentMode || 'Cash',
-            image_path: filePath
-          };
-          dbFunctions.addBill(billToSave, billData.items);
-        } catch (dbErr) {
-          console.error("Failed to archive bill:", dbErr);
-        }
+        setTimeout(async () => {
+          try {
+            // 5. Generate PDF
+            const pdfData = await printWin.webContents.printToPDF({
+                printBackground: true,
+                pageSize: { width: 80, height: 297 } // 80mm thermal paper width approx
+            });
+            
+            // 6. Save File
+            fs.writeFileSync(filePath, pdfData);
+            console.log("Bill saved as PDF:", filePath);
 
-        // 7. Trigger Thermal Print
-        printWin.webContents.print({ silent: false, printBackground: true }, () => {
-          printWin.close();
-        });
+            // 6.5 Save to Database
+            // 6.5 Save to Database (ONLY IF NEW BILL)
+            if (!billData.reprint) {
+                try {
+                const billToSave = {
+                    bill_no: billData.billNo || '23',
+                    customer_id: billData.customerId || null,
+                    subtotal: billData.subtotal,
+                    cgst: billData.cgst,
+                    sgst: billData.sgst,
+                    total: billData.total,
+                    payment_mode: billData.paymentMode || 'Cash',
+                    image_path: filePath
+                };
+                dbFunctions.addBill(billToSave, billData.items);
+                } catch (dbErr) {
+                console.error("Failed to archive bill:", dbErr);
+                }
+            } else {
+                console.log("Reprinting existing bill - skipping DB save.");
+            }
 
+            // Return path to renderer immediately after saving
+            resolve({ success: true, path: filePath });
+
+            // 7. Trigger Thermal Print
+            printWin.webContents.print({ silent: false, printBackground: true }, () => {
+              printWin.close();
+            });
+
+          } catch (err) {
+            console.error("Error saving bill:", err);
+            printWin.close();
+            reject(err);
+          }
+        }, 500);
       } catch (err) {
-        console.error("Error saving bill:", err);
         printWin.close();
+        reject(err);
       }
-    }, 500);
+    });
+
+    // Handle window load errors
+    printWin.webContents.on('did-fail-load', (e, code, desc) => {
+        reject(new Error(`Failed to load receipt template: ${desc}`));
+        printWin.close();
+    });
   });
 });
 
@@ -161,7 +184,7 @@ ipcMain.handle("sys:open-data-folder", () => {
 ipcMain.handle("print-kot", async (event, kotData) => {
   const printWin = new BrowserWindow({
     show: false,
-    width: 300,
+    width: 350, // Increased width to prevent wrapping
     height: 1500,
     webPreferences: { nodeIntegration: false, contextIsolation: true }
   });
@@ -169,7 +192,7 @@ ipcMain.handle("print-kot", async (event, kotData) => {
   // Use a simple HTML template for KOT
   const kotHtml = `
     <html>
-      <body style="font-family: 'Courier New'; width: 280px; padding: 10px; color: black; background: white;">
+      <body style="font-family: 'Courier New'; width: 300px; padding: 5px; color: black; background: white;">
         <div style="text-align: center; font-size: 24px; font-weight: 900; margin: 10px 0; border: 2px solid black; padding: 5px;">TABLE #: ${kotData.tableNo || 'N/A'}</div>
         <div style="text-align: center; font-size: 12px; margin-bottom: 5px;">${new Date().toLocaleTimeString()}</div>
         <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
@@ -214,6 +237,7 @@ ipcMain.handle("db:get-sales-data", (e, period) => dbFunctions.getSalesData(peri
 ipcMain.handle("db:get-category-sales", () => dbFunctions.getCategorySales());
 ipcMain.handle("db:get-top-selling-items", (e, limit) => dbFunctions.getTopSellingItems(limit));
 ipcMain.handle("db:get-hourly-sales", () => dbFunctions.getHourlySales());
+ipcMain.handle("db:get-advanced-analytics", () => dbFunctions.getAdvancedAnalytics());
 ipcMain.handle("db:get-next-bill-no", () => dbFunctions.getNextBillNo());
 ipcMain.handle("db:reset-bill-sequence", () => dbFunctions.resetBillSequence());
 

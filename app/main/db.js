@@ -239,30 +239,34 @@ const dbFunctions = {
       .all(limit),
 
   // Analytics
-  getDailyStats: () => {
-    return db
-      .prepare(
-        `
-            SELECT 
-                COUNT(*) as count, 
-                SUM(total) as total_sales,
-                SUM(CASE WHEN payment_mode = 'Cash' THEN total ELSE 0 END) as cash_sales,
-                SUM(CASE WHEN payment_mode = 'UPI' THEN total ELSE 0 END) as upi_sales
-            FROM bills 
-            WHERE date(created_at) = date('now')
-        `
-      )
-      .get();
+  // Dashboard / Analytics
+  getAdvancedAnalytics: () => {
+    const query = (timeModifier) => `
+        SELECT 
+            COUNT(*) as count, 
+            COALESCE(SUM(total), 0) as total_sales,
+            COALESCE(SUM(CASE WHEN payment_mode = 'Cash' THEN total ELSE 0 END), 0) as cash_sales,
+            COALESCE(SUM(CASE WHEN payment_mode = 'UPI' OR payment_mode = 'Online' THEN total ELSE 0 END), 0) as online_sales
+        FROM bills 
+        WHERE ${timeModifier}
+    `;
+
+    return {
+        daily: db.prepare(query("date(created_at, 'localtime') = date('now', 'localtime')")).get(),
+        weekly: db.prepare(query("date(created_at, 'localtime') >= date('now', 'localtime', '-6 days')")).get(),
+        monthly: db.prepare(query("strftime('%Y-%m', created_at, 'localtime') = strftime('%Y-%m', 'now', 'localtime')")).get(),
+        yearly: db.prepare(query("strftime('%Y', created_at, 'localtime') = strftime('%Y', 'now', 'localtime')")).get()
+    };
   },
 
   getSalesData: (period = "daily") => {
     let query = "";
     if (period === "daily") {
-      query =
-        "SELECT date(created_at) as date, SUM(total) as amount FROM bills GROUP BY date(created_at) ORDER BY date DESC LIMIT 30";
+      // Last 30 days trend
+      query = "SELECT date(created_at, 'localtime') as date, SUM(total) as amount FROM bills GROUP BY date ORDER BY date DESC LIMIT 30";
     } else if (period === "monthly") {
-      query =
-        "SELECT strftime('%Y-%m', created_at) as date, SUM(total) as amount FROM bills GROUP BY date ORDER BY date DESC LIMIT 12";
+      // Monthly trend for current year
+      query = "SELECT strftime('%Y-%m', created_at, 'localtime') as date, SUM(total) as amount FROM bills WHERE strftime('%Y', created_at, 'localtime') = strftime('%Y', 'now', 'localtime') GROUP BY date ORDER BY date ASC";
     }
     return db.prepare(query).all();
   },
@@ -300,15 +304,37 @@ const dbFunctions = {
     return db
       .prepare(
         `
-            SELECT strftime('%H', created_at) as hour, SUM(total) as amount
+            SELECT strftime('%H', created_at, 'localtime') as hour, SUM(total) as amount
             FROM bills
-            WHERE date(created_at) = date('now')
+            WHERE date(created_at, 'localtime') = date('now', 'localtime')
             GROUP BY hour
             ORDER BY hour ASC
         `
       )
       .all();
   },
+
+  // Auto-prune data older than current year (Resets on 1st Jan)
+  pruneOldData: () => {
+    try {
+        // Delete items from PREVIOUS years. 
+        // This keeps the current year intact for "Yearly Analytics", but strictly wipes old years.
+        // It matches the requirement: "analytics reset to zero on 1 january"
+        const result = db.prepare(`
+            DELETE FROM bills 
+            WHERE strftime('%Y', created_at, 'localtime') < strftime('%Y', 'now', 'localtime')
+        `).run();
+        
+        // Cleanup orphaned items
+        db.prepare("DELETE FROM bill_items WHERE bill_id NOT IN (SELECT id FROM bills)").run();
+
+        console.log(`Pruned ${result.changes} bills from previous years.`);
+        return result.changes;
+    } catch (err) {
+        console.error("Pruning failed:", err);
+        return 0;
+    }
+  }
 };
 
 module.exports = { initDb, dbFunctions };

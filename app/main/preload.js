@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld("api", {
   getCategorySales: () => ipcRenderer.invoke("db:get-category-sales"),
   getTopSellingItems: (limit) => ipcRenderer.invoke("db:get-top-selling-items", limit),
   getHourlySales: () => ipcRenderer.invoke("db:get-hourly-sales"),
+  getAdvancedAnalytics: () => ipcRenderer.invoke("db:get-advanced-analytics"),
   getNextBillNo: () => ipcRenderer.invoke("db:get-next-bill-no"),
   resetBillSequence: () => ipcRenderer.invoke("db:reset-bill-sequence"),
   // Menu Functions

@@ -36,11 +36,27 @@ export default function MenuPage() {
         loadData();
     }, []);
 
-    const handleAddCategory = async () => {
-        if (!newCat.name) return;
-        await window.api.addCategory(newCat);
-        setNewCat({ name: "", emoji: "📂" });
-        loadData();
+    const handleAddCategory = async (e) => {
+        if (e) e.preventDefault();
+        console.log("Attempting to add category:", newCat);
+        if (!newCat.name) {
+            alert("Please enter a group name");
+            return;
+        }
+        
+        try {
+            if (window.api) {
+                await window.api.addCategory(newCat);
+            } else {
+                console.log("Mock adding category:", newCat);
+                setCategories([...categories, { id: Date.now(), ...newCat }]);
+            }
+            setNewCat({ name: "", emoji: "📂" });
+            loadData();
+        } catch (err) {
+            console.error(err);
+            alert("Failed to add category. Name might be duplicate.");
+        }
     };
 
     const handleAddItem = async () => {
@@ -126,15 +142,15 @@ export default function MenuPage() {
 
                     <div style={{ padding: "20px", borderTop: "1px solid var(--border-glass)", background: "rgba(0,0,0,0.2)" }}>
                         <p style={{ margin: "0 0 12px 0", fontSize: "12px", color: "var(--text-muted)" }}>Manual Entry</p>
-                        <div style={{ display: "flex", gap: "8px" }}>
+                        <form onSubmit={handleAddCategory} style={{ display: "flex", gap: "8px" }}>
                             <input 
                                 placeholder="Group Name..." 
                                 value={newCat.name}
                                 onChange={e => setNewCat({...newCat, name: e.target.value})}
-                                style={{ flex: 1, padding: "8px 12px", fontSize: "13px" }}
+                                style={{ flex: 1, padding: "8px 12px", fontSize: "13px", color: "white", background: "rgba(255,255,255,0.1)" }}
                             />
-                            <button onClick={handleAddCategory} className="btn-secondary" style={{ padding: "8px", borderRadius: "8px" }}>➕</button>
-                        </div>
+                            <button type="submit" className="btn-secondary" style={{ padding: "8px", borderRadius: "8px" }}>➕</button>
+                        </form>
                     </div>
                 </div>
 
