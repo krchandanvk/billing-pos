@@ -29,11 +29,16 @@ export default function DashboardPage() {
                 return;
             }
             try {
+                console.log("Fetching analytics data...");
                 const [advStats, hourly, top] = await Promise.all([
                     window.api.getAdvancedAnalytics(),
                     window.api.getHourlySales(),
                     window.api.getTopSellingItems(5)
                 ]);
+                console.log("Advanced Stats received:", advStats);
+                console.log("Hourly Sales received:", hourly);
+                console.log("Top Items received:", top);
+                
                 if (advStats) setAnalyticsData(advStats);
                 setHourlySales(hourly || []);
                 setTopItems(top || []);
@@ -122,7 +127,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="stat-card">
                             <span style={{ fontSize: "11px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "600" }}>Digital Sales ({activePeriod})</span>
-                            <div className="stat-value">₹{(currentStats.online_sales || currentStats.upi_sales || 0).toLocaleString()}</div>
+                            <div className="stat-value">₹{(currentStats.upi_sales || 0).toLocaleString()}</div>
                             <div style={{ fontSize: "11px", color: "var(--accent-secondary)" }}>UPI & Cards</div>
                         </div>
                     </div>

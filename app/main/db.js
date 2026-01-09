@@ -15,7 +15,7 @@ function initDb() {
             name TEXT NOT NULL,
             mobile TEXT UNIQUE NOT NULL,
             notes TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT (datetime('now', 'localtime'))
         )
     `);
 
@@ -60,7 +60,7 @@ function initDb() {
             total REAL NOT NULL,
             payment_mode TEXT DEFAULT 'Cash',
             image_path TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_at DATETIME DEFAULT (datetime('now', 'localtime')),
             FOREIGN KEY (customer_id) REFERENCES customers(id)
         )
     `);
@@ -245,8 +245,8 @@ const dbFunctions = {
         SELECT 
             COUNT(*) as count, 
             COALESCE(SUM(total), 0) as total_sales,
-            COALESCE(SUM(CASE WHEN payment_mode = 'Cash' THEN total ELSE 0 END), 0) as cash_sales,
-            COALESCE(SUM(CASE WHEN payment_mode = 'UPI' OR payment_mode = 'Online' THEN total ELSE 0 END), 0) as online_sales
+            COALESCE(SUM(CASE WHEN LOWER(payment_mode) = 'cash' THEN total ELSE 0 END), 0) as cash_sales,
+            COALESCE(SUM(CASE WHEN LOWER(payment_mode) IN ('upi', 'online', 'card', 'cards') THEN total ELSE 0 END), 0) as upi_sales
         FROM bills 
         WHERE ${timeModifier}
     `;

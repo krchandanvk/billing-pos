@@ -139,7 +139,17 @@ export default function BillingPage() {
                 }
             }
 
-            const billData = { items: billItems, subtotal, cgst, sgst, total: grandTotal, billNo: finalBillNo, customerName: "CASH", paymentMode: "Cash" };
+            const billData = { 
+                items: billItems, 
+                subtotal, 
+                cgst, 
+                sgst, 
+                total: grandTotal, 
+                billNo: finalBillNo, 
+                customerName: "CASH", 
+                paymentMode: "Cash",
+                timestamp: new Date().toISOString() // Add timestamp for file metadata
+            };
             console.log("Sending Bill Data:", billData);
             
             if (window.api?.printBill) {

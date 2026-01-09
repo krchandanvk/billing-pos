@@ -37,9 +37,8 @@ ipcMain.handle("print-bill", (event, billData) => {
       fs.mkdirSync(saveDir, { recursive: true });
     }
 
-    // 2. Generate Filename: [InvoiceNo]-[Amount].pdf
-    const dateStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-    const filename = `${billData.billNo || 'DRAFT'}_Amt-${Math.round(billData.total)}_${dateStr}.pdf`;
+    // 2. Generate Filename: Just bill number as JPG (e.g., "01.jpg")
+    const filename = `${billData.billNo || 'DRAFT'}.jpg`;
     const filePath = path.join(saveDir, filename);
 
     const printWin = new BrowserWindow({
@@ -60,17 +59,20 @@ ipcMain.handle("print-bill", (event, billData) => {
 
         setTimeout(async () => {
           try {
-            // 5. Generate PDF
-            const pdfData = await printWin.webContents.printToPDF({
-                printBackground: true,
-                pageSize: { width: 80, height: 297 } // 80mm thermal paper width approx
-            });
+            // 5. Capture as JPG Image (thermal print style)
+            const imageData = await printWin.webContents.capturePage();
+            const jpgBuffer = imageData.toJPEG(95); // 95% quality
             
-            // 6. Save File
-            fs.writeFileSync(filePath, pdfData);
-            console.log("Bill saved as PDF:", filePath);
+            // 6. Save File as JPG
+            fs.writeFileSync(filePath, jpgBuffer);
+            
+            // 6.1 Set file timestamp to match bill date/time
+            // Use billData.timestamp if provided, otherwise use current time
+            const billTimestamp = billData.timestamp ? new Date(billData.timestamp) : new Date();
+            fs.utimesSync(filePath, billTimestamp, billTimestamp);
+            
+            console.log("Bill saved as JPG with timestamp:", billTimestamp.toLocaleString(), filePath);
 
-            // 6.5 Save to Database
             // 6.5 Save to Database (ONLY IF NEW BILL)
             if (!billData.reprint) {
                 try {
@@ -124,6 +126,7 @@ ipcMain.handle("sys:backup-data", async () => {
     try {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const backupDir = path.join(app.getPath('documents'), 'BillingBackups', `Backup_${timestamp}`);
+        console.log("Creating backup at:", backupDir);
         if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
 
         // Copy Database
@@ -133,9 +136,15 @@ ipcMain.handle("sys:backup-data", async () => {
         // Copy Invoices
         const invoicesPath = path.join(app.getPath('documents'), 'Invoices');
         const invoicesDest = path.join(backupDir, 'Invoices');
+        console.log("Invoices source:", invoicesPath);
         if(fs.existsSync(invoicesPath)) {
+            const files = fs.readdirSync(invoicesPath);
+            console.log(`Found ${files.length} invoice files`);
             // Recursive copy for Node 16+
             fs.cpSync(invoicesPath, invoicesDest, { recursive: true });
+            console.log("✅ Invoices copied successfully");
+        } else {
+            console.warn("⚠️ Invoices folder not found");
         }
         
         return { success: true, path: backupDir };
@@ -232,7 +241,7 @@ ipcMain.handle("db:get-customers", () => dbFunctions.getCustomers());
 ipcMain.handle("db:add-customer", (e, data) => dbFunctions.addCustomer(data));
 ipcMain.handle("db:get-bills", (e, limit) => dbFunctions.getBills(limit));
 ipcMain.handle("db:get-bill-items", (e, billId) => dbFunctions.getBillItems(billId));
-ipcMain.handle("db:get-daily-stats", () => dbFunctions.getDailyStats());
+ipcMain.handle("db:get-daily-stats", () => dbFunctions.getAdvancedAnalytics().daily);
 ipcMain.handle("db:get-sales-data", (e, period) => dbFunctions.getSalesData(period));
 ipcMain.handle("db:get-category-sales", () => dbFunctions.getCategorySales());
 ipcMain.handle("db:get-top-selling-items", (e, limit) => dbFunctions.getTopSellingItems(limit));

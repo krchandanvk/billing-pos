@@ -119,15 +119,15 @@ export default function MenuPage() {
                                         className={`nav-item ${selectedCatId === cat.id ? 'active' : ''}`}
                                         style={{
                                             flex: 1,
-                                            padding: "12px 16px",
+                                            padding: "10px 14px",
                                             borderRadius: "10px",
                                             display: "flex",
                                             alignItems: "center",
-                                            gap: "12px",
+                                            gap: "8px",
                                             fontSize: "14px"
                                         }}
                                     >
-                                        <span style={{ fontSize: "18px" }}>{cat.emoji}</span>
+                                        <span style={{ fontSize: "16px" }}>{cat.emoji}</span>
                                         {cat.name}
                                     </button>
                                     <button 
@@ -174,9 +174,11 @@ export default function MenuPage() {
                             <tbody>
                                 {items.filter(i => i.category_id === selectedCatId).map((item, idx) => (
                                     <tr key={item.id} style={{ animation: "fadeIn 0.3s ease-out forwards", animationDelay: `${idx * 0.05}s`, opacity: 0 }}>
-                                        <td style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                                            <div style={{ width: "40px", height: "40px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>{item.emoji}</div>
-                                            <div style={{ fontWeight: "600" }}>{item.name}</div>
+                                        <td>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                <div style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.03)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>{item.emoji}</div>
+                                                <div style={{ fontWeight: "600" }}>{item.name}</div>
+                                            </div>
                                         </td>
                                         <td>
                                             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>

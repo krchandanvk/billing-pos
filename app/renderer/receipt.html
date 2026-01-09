@@ -9,9 +9,9 @@
 
         body {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 13px;
+            font-size: 11px;
             margin: 0;
-            padding: 5px;
+            padding: 3px;
             width: 300px; /* Standard 80mm thermal paper width */
             font-weight: 600;
             color: black;
@@ -27,20 +27,20 @@
         }
 
         .header-name {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 900;
-            margin-bottom: 2px;
-            letter-spacing: 1px;
+            margin-bottom: 1px;
+            letter-spacing: 0.5px;
         }
 
         .sub-header {
-            font-size: 11px;
-            line-height: 1.2;
+            font-size: 9px;
+            line-height: 1.1;
         }
 
         .dashed-line {
             border-top: 1.5px dashed black;
-            margin: 6px 0;
+            margin: 4px 0;
         }
 
         table {
@@ -49,7 +49,7 @@
         }
 
         th {
-            font-size: 12px;
+            font-size: 10px;
             text-align: left;
             padding: 2px 0;
         }
@@ -57,38 +57,38 @@
         .meta-text {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 2px;
-            font-size: 13px;
+            margin-bottom: 1px;
+            font-size: 11px;
         }
 
         .item-name-row {
             font-weight: bold;
-            padding-top: 4px;
+            padding-top: 3px;
         }
 
         .item-values-row td {
-            padding-bottom: 4px;
+            padding-bottom: 3px;
         }
 
         .totals-table td {
-            padding: 2px 0;
+            padding: 1px 0;
         }
 
         .grand-total-row {
-            font-size: 17px;
+            font-size: 15px;
             font-weight: 900;
         }
 
         #amount-words {
-            font-size: 12px;
-            margin-top: 5px;
+            font-size: 10px;
+            margin-top: 4px;
             text-transform: uppercase;
         }
 
         .footer {
-            margin-top: 20px;
-            font-size: 11px;
-            line-height: 1.3;
+            margin-top: 15px;
+            font-size: 9px;
+            line-height: 1.2;
         }
     </style>
 </head>
@@ -97,16 +97,16 @@
 
     <!-- HEADER -->
     <div class="center">
-        <img src="assets/hotel_logo.png" style="width: 150px; margin-bottom: 5px; mix-blend-mode: multiply;">
+        <img src="assets/hotel_logo.png" style="width: 100px; margin-bottom: 3px; mix-blend-mode: multiply;">
         <div class="header-name">KALLO'S TANDON</div>
         <div class="sub-header">NEAR SATI CHAURA MANDIR</div>
         <div class="sub-header">GURU GOVIND SINGH LINK PATH PATNA CITY</div>
         <div class="sub-header">GST NO. 10APHPK4168H2Z2</div>
-        <div style="font-weight: 900; margin-top: 2px;">MOB-9234287770</div>
+        <div style="font-weight: 900; margin-top: 1px; font-size: 11px;">MOB-9234287770</div>
     </div>
 
     <!-- BILL META -->
-    <div style="margin-top: 8px;">
+    <div style="margin-top: 6px;">
         <div class="meta-text">
             <span>BILL NO : <span id="bill-no">23</span></span>
             <span>DT : <span id="date">03/01/26</span> TM: <span id="time">19:58:52</span></span>
@@ -119,7 +119,7 @@
     <div class="dashed-line"></div>
 
     <!-- TABLE HEADER -->
-    <table style="font-size: 12px;">
+    <table style="font-size: 10px;">
         <thead>
             <tr>
                 <th style="width: 10%;">SR</th>
@@ -143,12 +143,12 @@
     <div class="dashed-line"></div>
 
     <!-- SUMMARY -->
-    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;">
+    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px;">
         <div>ITEM: <span id="total-items">0</span> QTY: <span id="total-qty">0</span></div>
         <div class="right">AMOUNT: <span id="subtotal-display">0.00</span></div>
     </div>
 
-    <div class="center" style="font-size: 11px; margin: 5px 0;">INCLUSIVE OF ALL TAXES</div>
+    <div class="center" style="font-size: 9px; margin: 4px 0;">INCLUSIVE OF ALL TAXES</div>
 
     <div class="dashed-line"></div>
 
@@ -217,9 +217,11 @@
             const data = window.billData;
 
             document.getElementById("bill-no").innerText = data.billNo || "23";
-            const now = new Date();
-            document.getElementById("date").innerText = now.toLocaleDateString("en-GB");
-            document.getElementById("time").innerText = now.toLocaleTimeString("en-GB", { hour12: false });
+            
+            // Use billData timestamp if provided, otherwise use current time
+            const billTime = data.timestamp ? new Date(data.timestamp) : new Date();
+            document.getElementById("date").innerText = billTime.toLocaleDateString("en-GB");
+            document.getElementById("time").innerText = billTime.toLocaleTimeString("en-GB", { hour12: false });
             document.getElementById("customer-name").innerText = data.customerName || data.customerId || "CASH";
 
             const tbody = document.getElementById("items-body");
