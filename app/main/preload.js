@@ -23,5 +23,9 @@ contextBridge.exposeInMainWorld("api", {
   getMenuItems: (categoryId) => ipcRenderer.invoke("db:get-menu-items", categoryId),
   addMenuItem: (data) => ipcRenderer.invoke("db:add-menu-item", data),
   updateMenuItem: (id, data) => ipcRenderer.invoke("db:update-menu-item", id, data),
-  deleteMenuItem: (id) => ipcRenderer.invoke("db:delete-menu-item", id)
+  deleteMenuItem: (id) => ipcRenderer.invoke("db:delete-menu-item", id),
+  // System Functions
+  backupData: () => ipcRenderer.invoke("sys:backup-data"),
+  exportSalesCSV: () => ipcRenderer.invoke("sys:export-sales-csv"),
+  openDataFolder: () => ipcRenderer.invoke("sys:open-data-folder")
 });

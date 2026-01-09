@@ -5,6 +5,7 @@ import HistoryPage from "./pages/HistoryPage";
 import DashboardPage from "./pages/DashboardPage";
 import MenuPage from "./pages/MenuPage";
 import ReportsPage from "./pages/ReportsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("billing");
@@ -20,6 +21,7 @@ export default function App() {
     { id: "customers", label: "Customers", icon: "👤" },
     { id: "analytics", label: "Analytics", icon: "📊" },
     { id: "reports", label: "Reports", icon: "📈" },
+    { id: "settings", label: "Settings", icon: "⚙️" },
   ];
 
   const renderContent = () => {
@@ -30,6 +32,7 @@ export default function App() {
       case "customers": return <CustomerPage />;
       case "analytics": return <DashboardPage />;
       case "reports": return <ReportsPage />;
+      case "settings": return <SettingsPage />;
       default: return <BillingPage />;
     }
   };
