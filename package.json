@@ -32,7 +32,7 @@
   },
   "build": {
     "appId": "com.biznesssoftware.billing",
-    "productName": "Bizness Billing POS",
+    "productName": "Kallu's Tandon Veg POS",
     "directories": {
       "output": "dist"
     },

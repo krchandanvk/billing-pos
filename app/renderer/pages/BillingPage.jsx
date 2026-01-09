@@ -4,7 +4,7 @@ export default function BillingPage() {
     // MULTI-TABLE STATE
     const [tables, setTables] = useState(() => {
         const initial = {};
-        for (let i = 1; i <= 22; i++) {
+        for (let i = 1; i <= 21; i++) {
             initial[i] = { items: [], billNo: "", isLocked: false };
         }
         return initial;
@@ -139,11 +139,24 @@ export default function BillingPage() {
                 }
             }
 
-            const billData = { items: billItems, subtotal, cgst, sgst, total: grandTotal, billNo: finalBillNo, customerName: "CASH", paymentMode: "Cash" };
+            const billData = { 
+                items: billItems, 
+                subtotal, 
+                cgst, 
+                sgst, 
+                total: grandTotal, 
+                billNo: finalBillNo, 
+                customerName: "CASH", 
+                paymentMode: "Cash",
+                timestamp: new Date().toISOString() // Add timestamp for file metadata
+            };
             console.log("Sending Bill Data:", billData);
             
             if (window.api?.printBill) {
-                await window.api.printBill(billData);
+                const result = await window.api.printBill(billData);
+                if (result && result.success && result.path) {
+                    alert(`✅ Bill saved successfully!\nLocation: ${result.path}`);
+                }
             } else {
                 window.print();
             }
@@ -156,21 +169,24 @@ export default function BillingPage() {
         }
     };
 
-    // Calculations
-    const subtotal = billItems.reduce((sum, i) => sum + i.price * i.qty, 0);
-    const cgst = subtotal * 0.025;
-    const sgst = subtotal * 0.025;
-    const grandTotal = subtotal + cgst + sgst;
+
+    // Calculations (INCLUSIVE TAX LOGIC)
+    const grandTotal = billItems.reduce((sum, i) => sum + i.price * i.qty, 0);
+    const taxableValue = grandTotal / 1.05;
+    const totalTax = grandTotal - taxableValue;
+    const cgst = totalTax / 2;
+    const sgst = totalTax / 2;
+    const subtotal = grandTotal; // For display purposes, Subtotal = Grand Total in inclusive mode
 
     const currentCategoryObj = useMemo(() => categories.find(c => c.name === selectedCategory) || { id: null }, [categories, selectedCategory]);
     const filteredItems = useMemo(() => searchQuery ? allItems.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase())) : allItems.filter(item => item.category_id === currentCategoryObj.id), [allItems, currentCategoryObj, searchQuery]);
 
     return (
-        <div style={{ position: "fixed", inset: 0, paddingLeft: "150px", background: "var(--bg-app)", color: "white" }}>
+        <div style={{ position: "fixed", inset: 0, paddingLeft: "210px", background: "var(--bg-app)", color: "white" }}>
             
             {/* TOP TABLE SELECTOR */}
             <div style={{ padding: "10px", background: "#000", display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.1)", maxHeight: "120px", overflowY: "auto" }}>
-                <span style={{ fontSize: "12px", fontWeight: "900", color: "#666", marginRight: "10px", width: "100%" }}>ACTIVE TABLES (1-22):</span>
+                <span style={{ fontSize: "12px", fontWeight: "900", color: "#666", marginRight: "10px", width: "100%" }}>ACTIVE TABLES (1-21):</span>
                 {Object.keys(tables).map(id => (
                     <button 
                         key={id} 
@@ -266,7 +282,7 @@ export default function BillingPage() {
                     </div>
 
                     <div style={{ padding: "10px" }}>
-                        <button onClick={handleKOT} disabled={billItems.length === 0 || isLocked} style={{ width: "100%", padding: "15px", background: "rgba(168, 85, 247, 0.2)", border: "2px solid #a855f7", color: "#d8b4fe", borderRadius: "10px", fontWeight: "900", cursor: "pointer", fontSize: "14px" }}>
+                        <button onClick={handleKOT} disabled={billItems.length === 0} style={{ width: "100%", padding: "15px", background: "rgba(168, 85, 247, 0.2)", border: "2px solid #a855f7", color: "#d8b4fe", borderRadius: "10px", fontWeight: "900", cursor: "pointer", fontSize: "14px" }}>
                             👨‍🍳 ORDER TO KITCHEN
                         </button>
                     </div>
@@ -290,12 +306,12 @@ export default function BillingPage() {
 
                     <div style={{ padding: "15px", background: "rgba(0,0,0,0.5)", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#888", marginBottom: "4px" }}><span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#666", marginBottom: "10px" }}><span>GST (5%)</span><span>₹{(cgst + sgst).toFixed(2)}</span></div>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "var(--accent-primary)", marginBottom: "10px" }}><span>GST (5% Included)</span><span>₹{totalTax.toFixed(2)}</span></div>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "15px", fontWeight: "900", fontSize: "22px", color: "var(--accent-success)" }}>
                             <span>TOTAL</span>
                             <span>₹{grandTotal.toFixed(2)}</span>
                         </div>
-                        <button onClick={handlePrintFinal} disabled={billItems.length === 0 || isLocked} style={{ width: "100%", padding: "18px", background: "var(--grad-primary)", border: "none", borderRadius: "12px", color: "white", fontSize: "16px", fontWeight: "900", cursor: "pointer" }}>PRINT FINAL BILL</button>
+                        <button onClick={handlePrintFinal} disabled={billItems.length === 0} style={{ width: "100%", padding: "18px", background: "var(--grad-primary)", border: "none", borderRadius: "12px", color: "white", fontSize: "16px", fontWeight: "900", cursor: "pointer" }}>PRINT FINAL BILL</button>
                     </div>
                 </div>
             </div>

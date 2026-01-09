@@ -36,11 +36,27 @@ export default function MenuPage() {
         loadData();
     }, []);
 
-    const handleAddCategory = async () => {
-        if (!newCat.name) return;
-        await window.api.addCategory(newCat);
-        setNewCat({ name: "", emoji: "📂" });
-        loadData();
+    const handleAddCategory = async (e) => {
+        if (e) e.preventDefault();
+        console.log("Attempting to add category:", newCat);
+        if (!newCat.name) {
+            alert("Please enter a group name");
+            return;
+        }
+        
+        try {
+            if (window.api) {
+                await window.api.addCategory(newCat);
+            } else {
+                console.log("Mock adding category:", newCat);
+                setCategories([...categories, { id: Date.now(), ...newCat }]);
+            }
+            setNewCat({ name: "", emoji: "📂" });
+            loadData();
+        } catch (err) {
+            console.error(err);
+            alert("Failed to add category. Name might be duplicate.");
+        }
     };
 
     const handleAddItem = async () => {
@@ -103,15 +119,15 @@ export default function MenuPage() {
                                         className={`nav-item ${selectedCatId === cat.id ? 'active' : ''}`}
                                         style={{
                                             flex: 1,
-                                            padding: "12px 16px",
+                                            padding: "10px 14px",
                                             borderRadius: "10px",
                                             display: "flex",
                                             alignItems: "center",
-                                            gap: "12px",
+                                            gap: "8px",
                                             fontSize: "14px"
                                         }}
                                     >
-                                        <span style={{ fontSize: "18px" }}>{cat.emoji}</span>
+                                        <span style={{ fontSize: "16px" }}>{cat.emoji}</span>
                                         {cat.name}
                                     </button>
                                     <button 
@@ -126,15 +142,15 @@ export default function MenuPage() {
 
                     <div style={{ padding: "20px", borderTop: "1px solid var(--border-glass)", background: "rgba(0,0,0,0.2)" }}>
                         <p style={{ margin: "0 0 12px 0", fontSize: "12px", color: "var(--text-muted)" }}>Manual Entry</p>
-                        <div style={{ display: "flex", gap: "8px" }}>
+                        <form onSubmit={handleAddCategory} style={{ display: "flex", gap: "8px" }}>
                             <input 
                                 placeholder="Group Name..." 
                                 value={newCat.name}
                                 onChange={e => setNewCat({...newCat, name: e.target.value})}
-                                style={{ flex: 1, padding: "8px 12px", fontSize: "13px" }}
+                                style={{ flex: 1, padding: "8px 12px", fontSize: "13px", color: "white", background: "rgba(255,255,255,0.1)" }}
                             />
-                            <button onClick={handleAddCategory} className="btn-secondary" style={{ padding: "8px", borderRadius: "8px" }}>➕</button>
-                        </div>
+                            <button type="submit" className="btn-secondary" style={{ padding: "8px", borderRadius: "8px" }}>➕</button>
+                        </form>
                     </div>
                 </div>
 
@@ -158,9 +174,11 @@ export default function MenuPage() {
                             <tbody>
                                 {items.filter(i => i.category_id === selectedCatId).map((item, idx) => (
                                     <tr key={item.id} style={{ animation: "fadeIn 0.3s ease-out forwards", animationDelay: `${idx * 0.05}s`, opacity: 0 }}>
-                                        <td style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                                            <div style={{ width: "40px", height: "40px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>{item.emoji}</div>
-                                            <div style={{ fontWeight: "600" }}>{item.name}</div>
+                                        <td>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                <div style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.03)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>{item.emoji}</div>
+                                                <div style={{ fontWeight: "600" }}>{item.name}</div>
+                                            </div>
                                         </td>
                                         <td>
                                             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>

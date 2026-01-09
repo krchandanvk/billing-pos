@@ -9,7 +9,8 @@ try {
 }
 
 export default function DashboardPage() {
-    const [stats, setStats] = useState({ count: 0, total_sales: 0, cash_sales: 0, upi_sales: 0 });
+    const [analyticsData, setAnalyticsData] = useState({ daily: {}, weekly: {}, monthly: {}, yearly: {} });
+    const [activePeriod, setActivePeriod] = useState("daily");
     const [hourlySales, setHourlySales] = useState([]);
     const [topItems, setTopItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -17,26 +18,28 @@ export default function DashboardPage() {
     useEffect(() => {
         const fetchDashboardData = async () => {
             if (!window.api) {
-                setStats({ count: 12, total_sales: 4500, cash_sales: 2000, upi_sales: 2500 });
-                setHourlySales([
-                    { hour: "10", amount: 200 }, { hour: "11", amount: 500 }, { hour: "12", amount: 1200 },
-                    { hour: "13", amount: 800 }, { hour: "14", amount: 1500 }
-                ]);
-                setTopItems([
-                    { name: "Veg Chowmein", sold_count: 15 },
-                    { name: "Paneer Dosa", sold_count: 12 },
-                    { name: "Cold Coffee", sold_count: 10 }
-                ]);
+                // Mock for browser
+                setAnalyticsData({
+                    daily: { count: 12, total_sales: 4500, cash_sales: 2000, upi_sales: 2500 },
+                    weekly: { count: 80, total_sales: 32000, cash_sales: 15000, upi_sales: 17000 },
+                    monthly: { count: 320, total_sales: 125000, cash_sales: 60000, upi_sales: 65000 },
+                    yearly: { count: 320, total_sales: 125000, cash_sales: 60000, upi_sales: 65000 },
+                });
                 setLoading(false);
                 return;
             }
             try {
-                const [basicStats, hourly, top] = await Promise.all([
-                    window.api.getDailyStats(),
+                console.log("Fetching analytics data...");
+                const [advStats, hourly, top] = await Promise.all([
+                    window.api.getAdvancedAnalytics(),
                     window.api.getHourlySales(),
                     window.api.getTopSellingItems(5)
                 ]);
-                if (basicStats) setStats(basicStats);
+                console.log("Advanced Stats received:", advStats);
+                console.log("Hourly Sales received:", hourly);
+                console.log("Top Items received:", top);
+                
+                if (advStats) setAnalyticsData(advStats);
                 setHourlySales(hourly || []);
                 setTopItems(top || []);
             } catch (err) {
@@ -46,6 +49,8 @@ export default function DashboardPage() {
         };
         fetchDashboardData();
     }, []);
+
+    const currentStats = analyticsData[activePeriod] || {};
 
     const lineData = {
         labels: hourlySales.map(h => `${h.hour}:00`),
@@ -61,25 +66,37 @@ export default function DashboardPage() {
         }]
     };
 
-    const paymentData = {
-        labels: ['Cash', 'UPI', 'Other'],
-        datasets: [{
-            data: [
-                stats.cash_sales || 0, 
-                stats.upi_sales || 0, 
-                Math.max(0, (stats.total_sales - (stats.cash_sales || 0) - (stats.upi_sales || 0)))
-            ],
-            backgroundColor: ['#10b981', '#38bdf8', '#f43f5e'],
-            hoverOffset: 4,
-            borderWidth: 0
-        }]
-    };
-
     return (
         <div style={{ padding: "8px" }}>
-            <div style={{ marginBottom: "16px" }}>
-                <h1 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "2px" }}>Arctic Dashboard</h1>
-                <p style={{ color: "var(--text-dim)", fontSize: "12px" }}>Real-time business performance overview</p>
+            <div style={{ marginBottom: "16px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                <div>
+                    <h1 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "2px" }}>Arctic Dashboard</h1>
+                    <p style={{ color: "var(--text-dim)", fontSize: "12px" }}>Real-time business performance overview</p>
+                </div>
+                
+                {/* Period Selector */}
+                <div className="glass-panel" style={{ padding: "4px", borderRadius: "12px", display: "flex", gap: "4px", background: "rgba(15, 23, 42, 0.6)" }}>
+                    {['daily', 'weekly', 'monthly', 'yearly'].map(p => (
+                        <button 
+                            key={p}
+                            onClick={() => setActivePeriod(p)}
+                            style={{
+                                padding: "6px 16px",
+                                borderRadius: "8px",
+                                border: "none",
+                                background: activePeriod === p ? "var(--grad-primary)" : "transparent",
+                                color: activePeriod === p ? "white" : "var(--text-dim)",
+                                fontSize: "12px",
+                                fontWeight: "600",
+                                textTransform: "capitalize",
+                                cursor: "pointer",
+                                transition: "all 0.2s"
+                            }}
+                        >
+                            {p}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {loading ? (
@@ -90,27 +107,27 @@ export default function DashboardPage() {
                 <>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px", marginBottom: "20px" }}>
                         <div className="stat-card">
-                            <span style={{ fontSize: "11px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "600" }}>Total Orders</span>
-                            <div className="stat-value">{stats.count}</div>
+                            <span style={{ fontSize: "11px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "600" }}>Total Orders ({activePeriod})</span>
+                            <div className="stat-value">{currentStats.count || 0}</div>
                             <div style={{ fontSize: "11px", color: "var(--accent-success)", display: "flex", alignItems: "center", gap: "4px" }}>
-                                <span style={{ fontSize: "14px" }}>↑</span> 12.5% vs yesterday
+                                <span style={{ fontSize: "14px" }}>🛒</span> Volumetric
                             </div>
                         </div>
                         <div className="stat-card">
-                            <span style={{ fontSize: "11px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "600" }}>Net Revenue</span>
-                            <div className="stat-value">₹{(stats.total_sales || 0).toLocaleString()}</div>
+                            <span style={{ fontSize: "11px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "600" }}>Net Revenue ({activePeriod})</span>
+                            <div className="stat-value">₹{(currentStats.total_sales || 0).toLocaleString()}</div>
                             <div style={{ fontSize: "11px", color: "var(--accent-primary)", display: "flex", alignItems: "center", gap: "4px" }}>
-                                <span style={{ fontSize: "14px" }}>⚡</span> 84% of daily goal
+                                <span style={{ fontSize: "14px" }}>⚡</span> Gross Sales
                             </div>
                         </div>
                         <div className="stat-card">
-                            <span style={{ fontSize: "11px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "600" }}>Cash Flow</span>
-                            <div className="stat-value">₹{(stats.cash_sales || 0).toLocaleString()}</div>
+                            <span style={{ fontSize: "11px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "600" }}>Cash Flow ({activePeriod})</span>
+                            <div className="stat-value">₹{(currentStats.cash_sales || 0).toLocaleString()}</div>
                             <div style={{ fontSize: "11px", color: "var(--text-dim)" }}>In-hand currency</div>
                         </div>
                         <div className="stat-card">
-                            <span style={{ fontSize: "11px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "600" }}>Digital Sales</span>
-                            <div className="stat-value">₹{(stats.upi_sales || 0).toLocaleString()}</div>
+                            <span style={{ fontSize: "11px", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "600" }}>Digital Sales ({activePeriod})</span>
+                            <div className="stat-value">₹{(currentStats.upi_sales || 0).toLocaleString()}</div>
                             <div style={{ fontSize: "11px", color: "var(--accent-secondary)" }}>UPI & Cards</div>
                         </div>
                     </div>

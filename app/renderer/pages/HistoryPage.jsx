@@ -41,6 +41,7 @@ export default function HistoryPage() {
                 billNo: bill.bill_no,
                 customerId: bill.customer_id,
                 paymentMode: bill.payment_mode,
+                timestamp: bill.created_at, // Use original bill's timestamp
                 reprint: true
             };
 
