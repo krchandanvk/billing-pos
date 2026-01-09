@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { menuData } from "../data/menu";
+import { useState, useEffect, useMemo } from "react";
 
 export default function BillingPage() {
     const [billItems, setBillItems] = useState([]);
@@ -9,17 +8,39 @@ export default function BillingPage() {
     const [customerList, setCustomerList] = useState([]);
     const [paymentMode, setPaymentMode] = useState("Cash");
 
+    const [categories, setCategories] = useState([]);
+    const [allItems, setAllItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
-        const loadCustomers = async () => {
+        const loadInitialData = async () => {
             try {
-                const data = await window.api.getCustomers();
-                setCustomerList(data);
+                const [customers, cats, items] = await Promise.all([
+                    window.api.getCustomers(),
+                    window.api.getCategories(),
+                    window.api.getMenuItems()
+                ]);
+                setCustomerList(customers);
+                setCategories(cats);
+                
+                // Parse prices from JSON string
+                const parsedItems = items.map(item => ({
+                    ...item,
+                    prices: JSON.parse(item.prices)
+                }));
+                setAllItems(parsedItems);
+                
+                if (cats.length > 0) setSelectedCategory(cats[0].name);
             } catch (err) {
                 console.error(err);
+            } finally {
+                setLoading(false);
             }
         };
-        loadCustomers();
+        loadInitialData();
     }, []);
+
+    const [selectedCategory, setSelectedCategory] = useState("");
 
     const addItem = (itemName, price, qtyType) => {
         if (isLocked) return;
@@ -88,76 +109,18 @@ export default function BillingPage() {
     const sgst = subtotal * 0.025;
     const grandTotal = subtotal + cgst + sgst;
 
-    const [selectedCategory, setSelectedCategory] = useState(menuData[0].category);
+    const currentCategoryObj = useMemo(() => 
+        categories.find(c => c.name === selectedCategory) || (categories.length > 0 ? categories[0] : { name: "", emoji: "🍽️" })
+    , [categories, selectedCategory]);
 
-    // Find the full category object to get its emoji
-    const currentCategoryObj = menuData.find(c => c.category === selectedCategory) || menuData[0];
-    const currentCategoryItems = currentCategoryObj.items || [];
+    const currentCategoryItems = useMemo(() => 
+        allItems.filter(item => item.category_id === currentCategoryObj.id)
+    , [allItems, currentCategoryObj]);
 
-    const getItemEmoji = (name) => {
-        const n = name.toLowerCase();
-        // Exact matches or high priority
-        if (n.includes("chowmein") || n.includes("noodle")) return "🍜";
-        if (n.includes("fried rice") || n.includes("biryani") || n.includes("pulao") || n.includes("bhat")) return "🍛";
-        if (n.includes("rice")) return "🍚"; // Plain rice
-        if (n.includes("manchurian")) return "🧆";
-        if (n.includes("soup")) return "🥣";
-        if (n.includes("momo")) return "🥟";
-        if (n.includes("pizza")) return "🍕";
-        if (n.includes("burger")) return "🍔";
-        if (n.includes("sandwich")) return "🥪";
-        if (n.includes("roll") || n.includes("wrap")) return "🌯";
-        if (n.includes("kebab") || n.includes("tikka")) return "🍢";
-        if (n.includes("pakora") || n.includes("bhaji")) return "🍘";
-        if (n.includes("fry") || n.includes("fries") || n.includes("chip") || n.includes("crispy")) return "🍟";
-
-        // South Indian
-        if (n.includes("dosa") || n.includes("uttapam")) return "🥞";
-        if (n.includes("idli")) return "⚪";
-
-        // Breads
-        if (n.includes("roti") || n.includes("naan") || n.includes("paratha") || n.includes("kulcha")) return "🫓";
-
-        // Main Course / Curries / Soya
-        if (n.includes("dal")) return "🍲";
-        if (n.includes("paneer") || n.includes("kadhai") || n.includes("masala") || n.includes("curry") || n.includes("chilli")) return "🥘";
-        if (n.includes("soya") || n.includes("chunk")) return "🥡";
-
-        // Drinks
-        if (n.includes("coffee")) return "☕";
-        if (n.includes("tea") || n.includes("chai")) return "🍵";
-        if (n.includes("water")) return "💧";
-        if (n.includes("mojito") || n.includes("lemon") || n.includes("soda") || n.includes("drink") || n.includes("bull") || n.includes("lagoon") || n.includes("fruit") || n.includes("apple")) return "🍹";
-        if (n.includes("shake") || n.includes("lassi") || n.includes("buttermilk")) return "🥤";
-
-        // Desserts & Others
-        if (n.includes("ice cream") || n.includes("scoop") || n.includes("vanilla") || n.includes("chocolate") || n.includes("strawberry") || n.includes("butterscotch") || n.includes("pista")) return "🍨";
-        if (n.includes("cake") || n.includes("pastry")) return "🍰";
-        if (n.includes("sweet") || n.includes("jamun") || n.includes("rasgulla") || n.includes("rasmalai") || n.includes("mithai") || n.includes("rajbhog") || n.includes("chenna")) return "🍬";
-
-        // Sides
-        if (n.includes("mushroom")) return "🍄";
-        if (n.includes("corn")) return "🌽";
-        if (n.includes("raita") || n.includes("curd") || n.includes("dahi")) return "🥛";
-        if (n.includes("salad")) return "🥗";
-        if (n.includes("thali") || n.includes("combo") || n.includes("plate")) return "🍱";
-        if (n.includes("papad")) return "🫓";
-
-        // Generic Fallbacks
-        if (n.includes("chilli")) return "🌶️";
-        if (n.includes("veg")) return "🥬";
-        if (n.includes("non-veg") || n.includes("chicken") || n.includes("meat")) return "🍗";
-
-        return "🍽️";
-    };
-
-    const [searchQuery, setSearchQuery] = useState("");
-
-    // Search Logic
-    const allItems = menuData.flatMap(cat => cat.items);
-    const filteredItems = searchQuery
-        ? allItems.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-        : currentCategoryItems;
+    const filteredItems = useMemo(() => {
+        if (!searchQuery) return currentCategoryItems;
+        return allItems.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }, [allItems, currentCategoryItems, searchQuery]);
 
     return (
         <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: "12px", padding: "12px", height: "100vh" }}>
@@ -169,22 +132,22 @@ export default function BillingPage() {
                     <h2 style={{ padding: "12px 0 12px 12px", margin: 0, fontSize: "14px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px" }}>
                         Menu
                     </h2>
-                    {menuData.map((cat) => (
+                    {categories.map((cat) => (
                         <button
-                            key={cat.category}
-                            onClick={() => { setSelectedCategory(cat.category); setSearchQuery(""); }}
+                            key={cat.id}
+                            onClick={() => { setSelectedCategory(cat.name); setSearchQuery(""); }}
                             style={{
                                 padding: "10px 12px",
                                 textAlign: "left",
-                                background: selectedCategory === cat.category && !searchQuery ? "rgba(6, 182, 212, 0.15)" : "transparent",
-                                borderLeft: selectedCategory === cat.category && !searchQuery ? "3px solid var(--accent-secondary)" : "3px solid transparent",
-                                color: selectedCategory === cat.category && !searchQuery ? "#fff" : "var(--text-muted)",
+                                background: selectedCategory === cat.name && !searchQuery ? "rgba(6, 182, 212, 0.15)" : "transparent",
+                                borderLeft: selectedCategory === cat.name && !searchQuery ? "3px solid var(--accent-secondary)" : "3px solid transparent",
+                                color: selectedCategory === cat.name && !searchQuery ? "#fff" : "var(--text-muted)",
                                 cursor: "pointer",
                                 borderRight: "none",
                                 borderTop: "none",
                                 borderBottom: "1px solid rgba(255,255,255,0.05)",
                                 fontSize: "12px",
-                                fontWeight: selectedCategory === cat.category && !searchQuery ? "600" : "400",
+                                fontWeight: selectedCategory === cat.name && !searchQuery ? "600" : "400",
                                 outline: "none",
                                 transition: "all 0.2s",
                                 display: "flex",
@@ -193,7 +156,7 @@ export default function BillingPage() {
                             }}
                         >
                             <span style={{ fontSize: "16px" }}>{cat.emoji}</span>
-                            <span>{cat.category}</span>
+                            <span>{cat.name}</span>
                         </button>
                     ))}
                 </div>
@@ -234,7 +197,7 @@ export default function BillingPage() {
                             <>
                                 <span style={{ fontSize: "24px" }}>{currentCategoryObj.emoji}</span>
                                 <span style={{ background: "linear-gradient(to right, #0ea5e9, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                                    {currentCategoryObj.category}
+                                    {currentCategoryObj.name}
                                 </span>
                             </>
                         )}
@@ -249,7 +212,7 @@ export default function BillingPage() {
                             filteredItems.map((item) =>
                                 Object.entries(item.prices).map(([type, price]) => (
                                     <button
-                                        key={item.name + type}
+                                        key={item.id + type}
                                         className="btn-secondary"
                                         disabled={isLocked}
                                         style={{
@@ -267,7 +230,7 @@ export default function BillingPage() {
                                         }}
                                         onClick={() => { addItem(item.name, price, type); if (searchQuery) setSearchQuery(""); }}
                                     >
-                                        <div style={{ fontSize: "28px", marginBottom: "-4px" }}>{item.emoji || getItemEmoji(item.name)}</div>
+                                        <div style={{ fontSize: "28px", marginBottom: "-4px" }}>{item.emoji}</div>
                                         <span style={{ fontWeight: 600, fontSize: "11px", wordBreak: "break-word", lineHeight: "1.1", textAlign: "center", color: "var(--text-main)" }}>{item.name}</span>
 
                                         <div style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "2px" }}>

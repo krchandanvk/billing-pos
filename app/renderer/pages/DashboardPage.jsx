@@ -6,26 +6,34 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 
 export default function DashboardPage() {
     const [stats, setStats] = useState({ count: 0, total_sales: 0, cash_sales: 0, upi_sales: 0 });
+    const [hourlySales, setHourlySales] = useState([]);
+    const [topItems, setTopItems] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchDashboardData = async () => {
             try {
-                const data = await window.api.getDailyStats();
-                if (data) setStats(data);
+                const [basicStats, hourly, top] = await Promise.all([
+                    window.api.getDailyStats(),
+                    window.api.getHourlySales(),
+                    window.api.getTopSellingItems(5)
+                ]);
+                if (basicStats) setStats(basicStats);
+                setHourlySales(hourly);
+                setTopItems(top);
             } catch (err) {
                 console.error(err);
             }
             setLoading(false);
         };
-        fetchStats();
+        fetchDashboardData();
     }, []);
 
     const chartData = {
-        labels: ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM'],
+        labels: hourlySales.map(h => `${h.hour}:00`),
         datasets: [{
-            label: 'Sales Trend',
-            data: [0, 450, 1200, 800, 2500, 1800], // Mock for now, would pull from DB group by hour
+            label: 'Sales Today',
+            data: hourlySales.map(h => h.amount),
             borderColor: '#0ea5e9',
             backgroundColor: 'rgba(14, 165, 233, 0.2)',
             fill: true,
@@ -34,9 +42,13 @@ export default function DashboardPage() {
     };
 
     const paymentData = {
-        labels: ['Cash', 'UPI', 'Card'],
+        labels: ['Cash', 'UPI', 'Other'],
         datasets: [{
-            data: [stats.cash_sales || 0, stats.upi_sales || 0, (stats.total_sales - stats.cash_sales - stats.upi_sales) || 0],
+            data: [
+                stats.cash_sales || 0, 
+                stats.upi_sales || 0, 
+                (stats.total_sales - (stats.cash_sales || 0) - (stats.upi_sales || 0)) || 0
+            ],
             backgroundColor: ['#10b981', '#0ea5e9', '#f43f5e'],
             borderWidth: 0
         }]
@@ -84,14 +96,16 @@ export default function DashboardPage() {
             </div>
 
             <div className="glass-panel" style={{ padding: "20px", marginTop: "24px" }}>
-                <h3 style={{ marginTop: 0, marginBottom: "20px", fontSize: "16px" }}>Top Selling Items (Mock)</h3>
+                <h3 style={{ marginTop: 0, marginBottom: "20px", fontSize: "16px" }}>Top Selling Items</h3>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "12px" }}>
-                    {["Paneer Tikka", "Roti", "Dal Makhani", "Chilli Potato", "Chicken Roll"].map((item, i) => (
+                    {topItems.length > 0 ? topItems.map((item, i) => (
                         <div key={i} style={{ padding: "12px", background: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)", textAlign: "center" }}>
-                            <div style={{ fontSize: "14px", fontWeight: "600" }}>{item}</div>
-                            <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{20 - i * 3} sold today</div>
+                            <div style={{ fontSize: "14px", fontWeight: "600" }}>{item.name}</div>
+                            <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{item.sold_count} sold</div>
                         </div>
-                    ))}
+                    )) : (
+                        <div style={{ gridColumn: "1/-1", textAlign: "center", color: "var(--text-muted)", padding: "20px" }}>No items sold yet.</div>
+                    )}
                 </div>
             </div>
         </div>

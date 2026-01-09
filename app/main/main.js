@@ -1,9 +1,11 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const { initDb, dbFunctions } = require("./db");
+const { menuData } = require("../renderer/data/menu");
 
 // Initialize Database
 initDb();
+dbFunctions.seedMenu(menuData);
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -113,3 +115,18 @@ ipcMain.handle("db:add-customer", (e, data) => dbFunctions.addCustomer(data));
 ipcMain.handle("db:get-bills", (e, limit) => dbFunctions.getBills(limit));
 ipcMain.handle("db:get-bill-items", (e, billId) => dbFunctions.getBillItems(billId));
 ipcMain.handle("db:get-daily-stats", () => dbFunctions.getDailyStats());
+ipcMain.handle("db:get-sales-data", (e, period) => dbFunctions.getSalesData(period));
+ipcMain.handle("db:get-category-sales", () => dbFunctions.getCategorySales());
+ipcMain.handle("db:get-top-selling-items", (e, limit) => dbFunctions.getTopSellingItems(limit));
+ipcMain.handle("db:get-hourly-sales", () => dbFunctions.getHourlySales());
+
+// Menu IPC Handlers
+ipcMain.handle("db:get-categories", () => dbFunctions.getCategories());
+ipcMain.handle("db:add-category", (e, data) => dbFunctions.addCategory(data));
+ipcMain.handle("db:update-category", (e, id, data) => dbFunctions.updateCategory(id, data));
+ipcMain.handle("db:delete-category", (e, id) => dbFunctions.deleteCategory(id));
+
+ipcMain.handle("db:get-menu-items", (e, categoryId) => dbFunctions.getMenuItems(categoryId));
+ipcMain.handle("db:add-menu-item", (e, data) => dbFunctions.addMenuItem(data));
+ipcMain.handle("db:update-menu-item", (e, id, data) => dbFunctions.updateMenuItem(id, data));
+ipcMain.handle("db:delete-menu-item", (e, id) => dbFunctions.deleteMenuItem(id));
