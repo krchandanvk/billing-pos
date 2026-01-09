@@ -76,9 +76,30 @@ export default function App() {
         </nav>
 
         <div style={{ padding: "16px", borderTop: "1px solid var(--border-glass)" }}>
-          <div style={{ background: "rgba(255,255,255,0.03)", padding: "12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-glass)" }}>
-            <p style={{ margin: 0, fontSize: "10px", color: "var(--text-dim)", fontWeight: "500" }}>VERSION</p>
-            <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "var(--accent-primary)", fontWeight: "600" }}>v2.4.0 Arctic</p>
+          <div style={{ 
+              background: "rgba(255,255,255,0.03)", 
+              border: "1px solid rgba(255,255,255,0.1)", 
+              borderRadius: "12px", 
+              padding: "12px", 
+              backdropFilter: "blur(5px)"
+          }}>
+              <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.4)", fontWeight: "900", marginBottom: "3px" }}>DEVELOPED BY</div>
+              <div style={{ 
+                  fontSize: "11px", 
+                  color: "#00ff88", 
+                  fontWeight: "900", 
+                  marginBottom: "6px"
+              }}>BIZNES SOFTWARE</div>
+              
+              <div style={{ fontSize: "10px", color: "#ff4d4d", fontWeight: "900", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ fontSize: "10px" }}>📞</span> 08867592382
+              </div>
+
+              <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "8px 0" }}></div>
+
+              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontWeight: "800" }}>
+                  VERSION <span style={{ color: "#ffff00" }}>v4.2 PRO</span>
+              </div>
           </div>
         </div>
       </div>

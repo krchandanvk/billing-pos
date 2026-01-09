@@ -121,14 +121,38 @@ export default function ReportsPage() {
                                 <div style={{ width: "30px", height: "30px", border: "2px solid rgba(56, 189, 248, 0.1)", borderTopColor: "var(--accent-primary)", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
                             </div>
                         ) : salesData.length > 0 ? (
-                            <Bar data={barData} options={{ 
-                                maintainAspectRatio: false,
-                                plugins: { legend: { display: false } },
-                                scales: { 
-                                    y: { grid: { color: "rgba(255,255,255,0.03)" }, ticks: { color: "var(--text-dim)", font: { family: 'Outfit', size: 10 } } },
-                                    x: { grid: { display: false }, ticks: { color: "var(--text-dim)", font: { family: 'Outfit', size: 10 } } }
-                                }
-                            }} />
+                            <Bar 
+                                data={barData} 
+                                options={{ 
+                                    maintainAspectRatio: false,
+                                    plugins: { 
+                                        legend: { display: false },
+                                        tooltip: { enabled: true }
+                                    },
+                                    scales: { 
+                                        y: { grid: { color: "rgba(255,255,255,0.03)" }, ticks: { color: "var(--text-dim)", font: { family: 'Outfit', size: 10 } } },
+                                        x: { grid: { display: false }, ticks: { color: "var(--text-dim)", font: { family: 'Outfit', size: 10 } } }
+                                    }
+                                }} 
+                                plugins={[{
+                                    id: 'valueLabel',
+                                    afterDatasetsDraw(chart) {
+                                        const { ctx, data } = chart;
+                                        ctx.save();
+                                        data.datasets.forEach((dataset, i) => {
+                                            const meta = chart.getDatasetMeta(i);
+                                            meta.data.forEach((bar, index) => {
+                                                const value = dataset.data[index];
+                                                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                                                ctx.font = 'bold 10px Outfit';
+                                                ctx.textAlign = 'center';
+                                                ctx.fillText(`₹${value}`, bar.x, bar.y - 10);
+                                            });
+                                        });
+                                        ctx.restore();
+                                    }
+                                }]}
+                            />
                         ) : (
                             <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-dim)", fontSize: "14px" }}>
                                 No transactions recorded for this period.
@@ -145,15 +169,46 @@ export default function ReportsPage() {
                                 <div style={{ width: "30px", height: "30px", border: "2px solid rgba(56, 189, 248, 0.1)", borderTopColor: "var(--accent-primary)", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
                             </div>
                         ) : categorySales.length > 0 ? (
-                            <Bar data={catData} options={{ 
-                                maintainAspectRatio: false, 
-                                indexAxis: 'y',
-                                plugins: { legend: { display: false } },
-                                scales: { 
-                                    x: { grid: { color: "rgba(255,255,255,0.03)" }, ticks: { color: "var(--text-dim)", font: { family: 'Outfit', size: 10 } } },
-                                    y: { grid: { display: false }, ticks: { color: "var(--text-main)", font: { family: 'Outfit', size: 11, weight: '500' } } }
-                                }
-                            }} />
+                            <Bar 
+                                data={catData} 
+                                options={{ 
+                                    maintainAspectRatio: false, 
+                                    indexAxis: 'y',
+                                    plugins: { 
+                                        legend: { display: false }
+                                    },
+                                    scales: { 
+                                        x: { 
+                                            grid: { color: "rgba(255,255,255,0.03)" }, 
+                                            ticks: { color: "var(--text-dim)", font: { family: 'Outfit', size: 10 } },
+                                            suggestedMax: Math.max(...categorySales.map(d => d.amount)) * 1.2
+                                        },
+                                        y: { grid: { display: false }, ticks: { color: "var(--text-main)", font: { family: 'Outfit', size: 11, weight: '500' } } }
+                                    }
+                                }}
+                                plugins={[{
+                                    id: 'catValueLabel',
+                                    afterDatasetsDraw(chart) {
+                                        const { ctx, data } = chart;
+                                        ctx.save();
+                                        data.datasets.forEach((dataset, i) => {
+                                            const meta = chart.getDatasetMeta(i);
+                                            meta.data.forEach((bar, index) => {
+                                                const value = dataset.data[index];
+                                                const label = data.labels[index];
+                                                
+                                                // Draw Text
+                                                ctx.fillStyle = '#ffffff';
+                                                ctx.font = 'bold 12px Outfit';
+                                                ctx.textAlign = 'left';
+                                                // Position text slightly inside the start of the bar for consistent look
+                                                ctx.fillText(`${label} - ₹${value.toLocaleString()}`, 25, bar.y + 5);
+                                            });
+                                        });
+                                        ctx.restore();
+                                    }
+                                }]}
+                            />
                         ) : (
                             <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-dim)", fontSize: "14px" }}>
                                 Waiting for category data...

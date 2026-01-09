@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const path = require("path");
 const { initDb, dbFunctions } = require("./db");
 const { menuData } = require("./seedData");
@@ -30,50 +30,44 @@ const fs = require('fs');
 
 ipcMain.handle("print-bill", async (event, billData) => {
   // 1. Setup Save Directory
-  const saveDir = path.join(app.getPath('documents'), 'kallos bill');
+  const saveDir = path.join(app.getPath('documents'), 'Invoices');
   if (!fs.existsSync(saveDir)) {
     fs.mkdirSync(saveDir, { recursive: true });
   }
 
-  // 2. Generate Filename: Bill-[No]-[Amount]-[Date].jpg
-  // Date format: DD-MM-YYYY
+  // 2. Generate Filename: [InvoiceNo]-[Amount].pdf
   const dateStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-  const filename = `Bill-${billData.billNo || '23'}-${Math.round(billData.total)}-${dateStr}.jpg`;
+  const filename = `${billData.billNo || 'DRAFT'}_Amt-${Math.round(billData.total)}_${dateStr}.pdf`;
   const filePath = path.join(saveDir, filename);
 
-  // 3. Create Hidden Window (Tall enough to capture long bills)
   const printWin = new BrowserWindow({
     show: false,
-    width: 350, // Slightly wider than 300px content to avoid scrollbars
+    width: 350,
     height: 2500,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true
-    }
+    webPreferences: { nodeIntegration: false, contextIsolation: true }
   });
 
   printWin.loadFile(path.join(__dirname, "../renderer/receipt.html"));
 
   printWin.webContents.once("did-finish-load", async () => {
-    // 4. Inject Data
     await printWin.webContents.executeJavaScript(`
       window.billData = ${JSON.stringify(billData)};
-      // Trigger render immediately just in case
       if (typeof renderBill === 'function') renderBill();
     `);
 
-    // Give a small buffer for DOM updates (images, layout)
     setTimeout(async () => {
       try {
-        // 5. Capture Page as JPG
-        const image = await printWin.webContents.capturePage();
-        const jpegData = image.toJPEG(80); // 80% quality is good for receipts
-
+        // 5. Generate PDF
+        const pdfData = await printWin.webContents.printToPDF({
+            printBackground: true,
+            pageSize: { width: 80, height: 297 } // 80mm thermal paper width approx
+        });
+        
         // 6. Save File
-        fs.writeFileSync(filePath, jpegData);
-        console.log("Bill saved to:", filePath);
+        fs.writeFileSync(filePath, pdfData);
+        console.log("Bill saved as PDF:", filePath);
 
-        // 6.5 Save to Database (Archiving)
+        // 6.5 Save to Database
         try {
           const billToSave = {
             bill_no: billData.billNo || '23',
@@ -86,16 +80,12 @@ ipcMain.handle("print-bill", async (event, billData) => {
             image_path: filePath
           };
           dbFunctions.addBill(billToSave, billData.items);
-          console.log("Bill archived in database.");
         } catch (dbErr) {
-          console.error("Failed to archive bill in database:", dbErr);
+          console.error("Failed to archive bill:", dbErr);
         }
 
         // 7. Trigger Thermal Print
-        printWin.webContents.print({ silent: false, printBackground: true }, (success, err) => {
-          if (!success) console.error("Print failed:", err);
-          // Close window after print dialog is handled/closed
-          // Note: If using silent:false, this callback runs after dialog closes.
+        printWin.webContents.print({ silent: false, printBackground: true }, () => {
           printWin.close();
         });
 
@@ -103,7 +93,112 @@ ipcMain.handle("print-bill", async (event, billData) => {
         console.error("Error saving bill:", err);
         printWin.close();
       }
-    }, 500); // 500ms render buffer
+    }, 500);
+  });
+});
+
+ipcMain.handle("sys:backup-data", async () => {
+    try {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const backupDir = path.join(app.getPath('documents'), 'BillingBackups', `Backup_${timestamp}`);
+        if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+
+        // Copy Database
+        const dbPath = path.join(app.getPath("userData"), "pos_system.db");
+        if(fs.existsSync(dbPath)) fs.copyFileSync(dbPath, path.join(backupDir, "pos_system.db"));
+
+        // Copy Invoices
+        const invoicesPath = path.join(app.getPath('documents'), 'Invoices');
+        const invoicesDest = path.join(backupDir, 'Invoices');
+        if(fs.existsSync(invoicesPath)) {
+            // Recursive copy for Node 16+
+            fs.cpSync(invoicesPath, invoicesDest, { recursive: true });
+        }
+        
+        return { success: true, path: backupDir };
+    } catch (e) {
+        return { success: false, error: e.message };
+    }
+});
+
+ipcMain.handle("sys:export-sales-csv", async () => {
+    try {
+        const bills = dbFunctions.getBills(100000); // Get all bills
+        let csvContent = "BillNo,Date,Customer,Subtotal,GST,Total,PaymentMode\n";
+        
+        bills.forEach(b => {
+            const row = [
+                b.bill_no,
+                new Date(b.created_at).toLocaleString(),
+                b.customer_name || 'Guest',
+                b.subtotal,
+                (b.cgst + b.sgst),
+                b.total,
+                b.payment_mode
+            ].map(f => `"${f}"`).join(",");
+            csvContent += row + "\n";
+        });
+
+        const { filePath } = await dialog.showSaveDialog({
+            buttonLabel: 'Export CSV',
+            defaultPath: `Sales_Export_${new Date().toISOString().split('T')[0]}.csv`
+        });
+
+        if (filePath) {
+            fs.writeFileSync(filePath, csvContent);
+            return { success: true, path: filePath };
+        }
+        return { success: false };
+    } catch (e) {
+        return { success: false, error: e.message };
+    }
+});
+
+ipcMain.handle("sys:open-data-folder", () => {
+    shell.openPath(path.join(app.getPath('documents'), 'BillingBackups'));
+});
+
+ipcMain.handle("print-kot", async (event, kotData) => {
+  const printWin = new BrowserWindow({
+    show: false,
+    width: 300,
+    height: 1500,
+    webPreferences: { nodeIntegration: false, contextIsolation: true }
+  });
+
+  // Use a simple HTML template for KOT
+  const kotHtml = `
+    <html>
+      <body style="font-family: 'Courier New'; width: 280px; padding: 10px; color: black; background: white;">
+        <div style="text-align: center; font-size: 24px; font-weight: 900; margin: 10px 0; border: 2px solid black; padding: 5px;">TABLE #: ${kotData.tableNo || 'N/A'}</div>
+        <div style="text-align: center; font-size: 12px; margin-bottom: 5px;">${new Date().toLocaleTimeString()}</div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <thead style="border-bottom: 1px dashed black;">
+            <tr style="text-align: left;">
+              <th>ITEM</th>
+              <th style="text-align: right;">QTY</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${kotData.items.map(it => `
+              <tr>
+                <td style="padding: 5px 0;">${it.name.toUpperCase()}</td>
+                <td style="text-align: right;">${it.qty}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="border-top: 2px solid black; margin-top: 10px; padding-top: 5px; text-align: center; font-size: 11px;">SEND TO KITCHEN</div>
+      </body>
+    </html>
+  `;
+
+  printWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(kotHtml)}`);
+  
+  printWin.webContents.once("did-finish-load", () => {
+    printWin.webContents.print({ silent: false, printBackground: true }, () => {
+      printWin.close();
+    });
   });
 });
 
@@ -119,6 +214,8 @@ ipcMain.handle("db:get-sales-data", (e, period) => dbFunctions.getSalesData(peri
 ipcMain.handle("db:get-category-sales", () => dbFunctions.getCategorySales());
 ipcMain.handle("db:get-top-selling-items", (e, limit) => dbFunctions.getTopSellingItems(limit));
 ipcMain.handle("db:get-hourly-sales", () => dbFunctions.getHourlySales());
+ipcMain.handle("db:get-next-bill-no", () => dbFunctions.getNextBillNo());
+ipcMain.handle("db:reset-bill-sequence", () => dbFunctions.resetBillSequence());
 
 // Menu IPC Handlers
 ipcMain.handle("db:get-categories", () => dbFunctions.getCategories());

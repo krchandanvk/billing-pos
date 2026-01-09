@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
   printBill: (data) => ipcRenderer.invoke("print-bill", data),
+  printKOT: (data) => ipcRenderer.invoke("print-kot", data),
   // Database Functions
   getCustomers: () => ipcRenderer.invoke("db:get-customers"),
   addCustomer: (data) => ipcRenderer.invoke("db:add-customer", data),
@@ -12,6 +13,8 @@ contextBridge.exposeInMainWorld("api", {
   getCategorySales: () => ipcRenderer.invoke("db:get-category-sales"),
   getTopSellingItems: (limit) => ipcRenderer.invoke("db:get-top-selling-items", limit),
   getHourlySales: () => ipcRenderer.invoke("db:get-hourly-sales"),
+  getNextBillNo: () => ipcRenderer.invoke("db:get-next-bill-no"),
+  resetBillSequence: () => ipcRenderer.invoke("db:reset-bill-sequence"),
   // Menu Functions
   getCategories: () => ipcRenderer.invoke("db:get-categories"),
   addCategory: (data) => ipcRenderer.invoke("db:add-category", data),

@@ -40,6 +40,14 @@ function initDb() {
         )
     `);
 
+  // App Settings Table (for Bill Sequence Reset)
+  db.exec(`
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+    `);
+
   // Bills Table
   db.exec(`
         CREATE TABLE IF NOT EXISTS bills (
@@ -159,6 +167,31 @@ const dbFunctions = {
   },
 
   // Bill CRUD
+  getNextBillNo: () => {
+    // Check if we have a reset point
+    let startId = 0;
+    try {
+        const setting = db.prepare("SELECT value FROM app_settings WHERE key = 'bill_sequence_start_id'").get();
+        if (setting) startId = parseInt(setting.value);
+    } catch (e) {
+        // Table might not exist yet if initDb hasn't run fully or old DB, default 0
+    }
+
+    const row = db.prepare("SELECT COUNT(*) as count FROM bills WHERE id > ?").get(startId);
+    return (row.count + 1).toString().padStart(2, '0');
+  },
+  resetBillSequence: () => {
+    // Set the current max ID as the start point for the new sequence
+    const maxRow = db.prepare("SELECT MAX(id) as maxId FROM bills").get();
+    const currentMaxId = maxRow.maxId || 0;
+    
+    db.prepare(`
+        INSERT INTO app_settings (key, value) VALUES ('bill_sequence_start_id', ?)
+        ON CONFLICT(key) DO UPDATE SET value=excluded.value
+    `).run(currentMaxId.toString());
+    
+    return true;
+  },
   addBill: (bill, items) => {
     const insertBill = db.prepare(`
             INSERT INTO bills (bill_no, customer_id, subtotal, cgst, sgst, total, payment_mode, image_path)
@@ -191,7 +224,7 @@ const dbFunctions = {
   },
 
   getBillItems: (billId) =>
-    db.prepare("SELECT * FROM bill_items WHERE bill_id = ?").all(),
+    db.prepare("SELECT * FROM bill_items WHERE bill_id = ?").all(billId),
 
   getBills: (limit = 100) =>
     db
