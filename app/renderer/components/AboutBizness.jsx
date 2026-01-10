@@ -3,7 +3,7 @@ import React from "react";
 export default function AboutBizness() {
     return (
         <div style={{ padding: "20px", color: "white", maxWidth: "900px", margin: "0 auto" }}>
-            <div style={{ textAlign: "center", marginBottom: "40px" }}>
+            <div style={{ textAlign: "left", marginBottom: "40px" }}>
                 <h1 style={{ fontSize: "32px", fontWeight: "800", marginBottom: "10px", background: "var(--grad-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                     Help & Support
                 </h1>
@@ -77,7 +77,8 @@ export default function AboutBizness() {
                             { icon: "📂", title: "Dynamic Catalog", desc: "Manage clusters, items, and multiple price variants." },
                             { icon: "👨‍🍳", title: "KOT Prints", desc: "Send Kitchen Order Tokens instantly to the kitchen." },
                             { icon: "📈", title: "Analytics", desc: "Visualize revenue, top items, and hourly trends." },
-                            { icon: "👤", title: "Smart CRM", desc: "Track guest spending, visits, and last seen data." }
+                            { icon: "👤", title: "Smart CRM", desc: "Track guest spending, visits, and last seen data." },
+                            { icon: "🔢", title: "Custom Series", desc: "Start billing from any specific number (e.g. 501)." }
                         ].map((feat, i) => (
                             <div key={i} style={{ padding: "15px", background: "rgba(255,255,255,0.02)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
                                 <div style={{ fontSize: "20px", marginBottom: "8px" }}>{feat.icon}</div>
@@ -98,7 +99,8 @@ export default function AboutBizness() {
                             { step: "2", title: "Add Inventory", text: "Choose a Cluster, then click '+' on products to add items to your Bill Manifest." },
                             { step: "3", title: "Send KOT", text: "Once items are added, click 'SEND KOT TO KITCHEN' to alert the chef." },
                             { step: "4", title: "Link Guest", text: "Use the 'Link Guest' search bar to search and attach an existing customer to the bill." },
-                            { step: "5", title: "Finalize & Print", text: "Click 'PRINT FINAL BILL' to generate the receipt, save the JPG, and update guest spending stats." }
+                            { step: "5", title: "Finalize & Print", text: "Click 'PRINT FINAL BILL' to generate the receipt, save the JPG, and update guest spending stats." },
+                            { step: "6", title: "Adjust Series", text: "Go to Settings → Bill Sequence to set a custom starting number for your invoices." }
                         ].map((guide, i) => (
                             <div key={i} style={{ display: "flex", gap: "15px", alignItems: "flex-start" }}>
                                 <div style={{ minWidth: "24px", height: "24px", background: "#00ff88", color: "#000", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "12px" }}>{guide.step}</div>
@@ -135,14 +137,14 @@ export default function AboutBizness() {
                     </div>
                 </div>
 
-                <div className="glass-panel" style={{ padding: "24px", textAlign: "center", background: "rgba(0, 255, 136, 0.05)" }}>
+                <div className="glass-panel" style={{ padding: "24px", textAlign: "left", background: "rgba(0, 255, 136, 0.05)" }}>
                     <p style={{ fontSize: "14px", color: "var(--text-main)", margin: "0 0 10px 0" }}>Developed & Maintained by</p>
                     <h2 style={{ fontSize: "24px", fontWeight: "900", color: "#00ff88", margin: "0 0 5px 0" }}>BIZNES SOFTWARE</h2>
                     <a href="https://www.biznessoftware.com" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-dim)", fontSize: "12px", textDecoration: "none" }}>www.biznessoftware.com</a>
                 </div>
             </div>
 
-            <div style={{ marginTop: "30px", textAlign: "center", fontSize: "12px", color: "var(--text-dim)" }}>
+            <div style={{ marginTop: "30px", textAlign: "left", fontSize: "12px", color: "var(--text-dim)" }}>
                 © 2026 Biznes Software. All rights reserved. | Bangalore, India
             </div>
         </div>

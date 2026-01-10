@@ -60,21 +60,47 @@ export default function MenuPage() {
     };
 
     const handleAddItem = async () => {
-        if (!newItem.name || !selectedCatId) return;
+        if (!newItem.name.trim()) {
+            alert("Please enter a product name.");
+            return;
+        }
+        if (!selectedCatId) {
+            alert("Please select or create a category first.");
+            return;
+        }
+
         const cleanedPrices = {};
         Object.entries(newItem.prices).forEach(([k, v]) => {
-            if (v) cleanedPrices[k] = parseFloat(v);
+            if (v && v.trim() !== "") {
+                const p = parseFloat(v);
+                if (!isNaN(p)) cleanedPrices[k] = p;
+            }
         });
 
-        await window.api.addMenuItem({
-            category_id: selectedCatId,
-            name: newItem.name,
-            emoji: newItem.emoji,
-            prices: cleanedPrices
-        });
-        setNewItem({ name: "", emoji: "🥘", prices: { half: "", full: "" } });
-        setShowItemForm(false);
-        loadData();
+        if (Object.keys(cleanedPrices).length === 0) {
+            alert("Please enter at least one price (e.g. Full: 120).");
+            return;
+        }
+
+        try {
+            if (window.api) {
+                await window.api.addMenuItem({
+                    category_id: selectedCatId,
+                    name: newItem.name.trim(),
+                    emoji: newItem.emoji,
+                    prices: cleanedPrices
+                });
+                alert("✅ Product added to catalog!");
+            } else {
+                setItems([...items, { id: Date.now(), category_id: selectedCatId, ...newItem, prices: cleanedPrices }]);
+            }
+            setNewItem({ name: "", emoji: "🥘", prices: { half: "", full: "" } });
+            setShowItemForm(false);
+            loadData();
+        } catch (err) {
+            console.error(err);
+            alert("❌ Failed to add product: " + err.message);
+        }
     };
 
     const handleDeleteItem = async (id) => {

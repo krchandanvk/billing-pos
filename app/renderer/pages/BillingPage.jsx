@@ -256,7 +256,7 @@ export default function BillingPage() {
                             <div style={{ textAlign: "center" }}>
                                 <div style={{ fontSize: "80px" }}>🔒</div>
                                 <h2>TABLE {activeTable} SEALED</h2>
-                                <button onClick={resetBill} style={{ marginTop: "20px", padding: "15px 40px", background: "var(--accent-success)", border: "none", borderRadius: "10px", color: "white", fontWeight: "900", cursor: "pointer" }}>CLEAR TABLE</button>
+                                <p style={{ color: "var(--text-dim)", fontSize: "14px" }}>Checkout completed for this table.</p>
                             </div>
                         </div>
                     )}

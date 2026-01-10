@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @page { margin: 0; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: auto;
+            background: white;
+            overflow: hidden;
+            width: 285px; /* Matches receipt.html scaling */
+        }
+        #kot-container {
+            box-sizing: border-box;
+            width: 285px;
+            padding: 10px 5px 20px 5px !important;
+            background: white;
+            display: block;
+        }
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: black;
+        }
+        .center { text-align: center; }
+        .dashed-line {
+            border-top: 1px dashed #000;
+            margin: 8px 0;
+            width: 100%;
+        }
+        .table-no {
+            font-size: 28px;
+            font-weight: 900;
+            border: 3px solid black;
+            padding: 8px;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            border-bottom: 2px solid black;
+            padding: 5px 0;
+        }
+        td {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div id="kot-container">
+        <div class="center">
+            <img src="assets/hotel_logo.png" style="width: 80px; margin-bottom: 5px; mix-blend-mode: multiply;">
+            <div style="font-size: 18px;">KALLO'S TANDON</div>
+            <div style="font-size: 14px;">KITCHEN ORDER TICKET</div>
+        </div>
+
+        <div class="center table-no">
+            TABLE: <span id="table-no">N/A</span>
+        </div>
+
+        <div class="center" style="font-size: 12px;">
+            DATE: <span id="date"></span> | TIME: <span id="time"></span>
+        </div>
+
+        <div class="dashed-line"></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 80%;">ITEM</th>
+                    <th style="width: 20%; text-align: right;">QTY</th>
+                </tr>
+            </thead>
+            <tbody id="items-body">
+                <!-- Items injected here -->
+            </tbody>
+        </table>
+
+        <div class="dashed-line"></div>
+        <div class="center" style="font-size: 12px; font-weight: 900; margin-top: 10px;">
+            -- SEND TO KITCHEN --
+        </div>
+    </div>
+
+    <script>
+        window.renderKOT = (data) => {
+            document.getElementById("table-no").innerText = data.tableNo || "N/A";
+            
+            const now = new Date();
+            document.getElementById("date").innerText = now.toLocaleDateString('en-GB');
+            document.getElementById("time").innerText = now.toLocaleTimeString();
+
+            const tbody = document.getElementById("items-body");
+            tbody.innerHTML = data.items.map(it => `
+                <tr>
+                    <td>${it.name.toUpperCase()}</td>
+                    <td style="text-align: right; font-size: 18px;">${it.qty}</td>
+                </tr>
+            `).join('');
+        };
+    </script>
+</body>
+</html>

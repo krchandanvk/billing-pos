@@ -71,12 +71,12 @@ export default function ReportsPage() {
 
     return (
         <div style={{ padding: "8px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "16px" }}>
-                <div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "16px", marginBottom: "24px" }}>
+                <div style={{ textAlign: "left" }}>
                     <h1 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "2px" }}>Business Intelligence</h1>
                     <p style={{ color: "var(--text-dim)", fontSize: "12px" }}>Deep dive into sales and category trends</p>
                 </div>
-                <div style={{ display: "flex", gap: "2px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "10px", border: "1px solid var(--border-glass)" }}>
+                <div style={{ display: "flex", gap: "2px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "10px", border: "1px solid var(--border-glass)", justifyContent: "flex-start" }}>
                     <button 
                         onClick={() => setPeriod('daily')}
                         style={{ 
@@ -84,7 +84,8 @@ export default function ReportsPage() {
                             fontSize: "12px", 
                             borderRadius: "6px",
                             background: period === 'daily' ? 'var(--grad-primary)' : 'transparent',
-                            color: period === 'daily' ? 'white' : 'var(--text-muted)'
+                            color: period === 'daily' ? 'white' : 'var(--text-muted)',
+                            justifyContent: "center"
                         }}
                     >
                         Daily
@@ -96,7 +97,8 @@ export default function ReportsPage() {
                             fontSize: "12px", 
                             borderRadius: "6px",
                             background: period === 'monthly' ? 'var(--grad-primary)' : 'transparent',
-                            color: period === 'monthly' ? 'white' : 'var(--text-muted)'
+                            color: period === 'monthly' ? 'white' : 'var(--text-muted)',
+                            justifyContent: "center"
                         }}
                     >
                         Monthly
@@ -106,18 +108,18 @@ export default function ReportsPage() {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
                 <div className="glass-panel" style={{ padding: "16px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                        <h3 style={{ fontSize: "15px", margin: 0 }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "8px", marginBottom: "20px" }}>
+                        <h3 style={{ fontSize: "15px", margin: 0, textAlign: "left" }}>
                             {period === 'daily' ? '30-Day Performance' : '12-Month Performance'}
                         </h3>
-                        <div style={{ fontSize: "11px", color: "var(--text-dim)" }}>
+                        <div style={{ fontSize: "11px", color: "var(--text-dim)", textAlign: "left" }}>
                             Avg: <span style={{ color: "var(--text-main)", fontWeight: "600" }}>₹{(salesData.reduce((a, b) => a + b.amount, 0) / (salesData.length || 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                         </div>
                     </div>
                     
                     <div style={{ height: "350px" }}>
                         {loading ? (
-                             <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                             <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start" }}>
                                 <div style={{ width: "30px", height: "30px", border: "2px solid rgba(56, 189, 248, 0.1)", borderTopColor: "var(--accent-primary)", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
                             </div>
                         ) : salesData.length > 0 ? (
@@ -154,7 +156,7 @@ export default function ReportsPage() {
                                 }]}
                             />
                         ) : (
-                            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-dim)", fontSize: "14px" }}>
+                            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", color: "var(--text-dim)", fontSize: "14px", textAlign: "left" }}>
                                 No transactions recorded for this period.
                             </div>
                         )}

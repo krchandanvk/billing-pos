@@ -32,14 +32,42 @@ export default function CustomerPage() {
 
     const handleAdd = async (e) => {
         e.preventDefault();
-        if (!newCustomer.name || !newCustomer.mobile) return;
+        
+        // Clean up mobile number (remove spaces, dots, dashes)
+        let mobile = newCustomer.mobile.replace(/[\s.-]/g, "");
+        
+        if (!newCustomer.name.trim()) {
+            alert("Please enter a guest name.");
+            return;
+        }
+
+        if (!mobile) {
+            alert("Please enter a mobile number.");
+            return;
+        }
+
+        // Auto-format for Indian numbers
+        if (/^\d{10}$/.test(mobile)) {
+            mobile = "+91" + mobile;
+        } else if (/^\d{12}$/.test(mobile) && mobile.startsWith("91")) {
+            mobile = "+" + mobile;
+        }
+
         try {
-            await window.api.addCustomer(newCustomer);
-            setNewCustomer({ name: "", mobile: "", notes: "" });
-            setShowAdd(false);
-            fetchCustomers();
+            const result = await window.api.addCustomer({ ...newCustomer, mobile });
+            if (result) {
+                setNewCustomer({ name: "", mobile: "", notes: "" });
+                setShowAdd(false);
+                fetchCustomers();
+                alert("✅ Guest enrolled successfully!");
+            }
         } catch (err) {
             console.error(err);
+            if (err.message.includes("UNIQUE constraint failed")) {
+                alert("❌ Error: A guest with this mobile number already exists.");
+            } else {
+                alert("❌ Failed to add guest: " + err.message);
+            }
         }
     };
 
@@ -50,15 +78,15 @@ export default function CustomerPage() {
 
     return (
         <div style={{ padding: "8px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px" }}>
-                <div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "16px", marginBottom: "32px" }}>
+                <div style={{ textAlign: "left" }}>
                     <h1 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "4px" }}>Guest Management</h1>
                     <p style={{ color: "var(--text-dim)", fontSize: "14px" }}>CRM and loyalty engagement for your regular clientele</p>
                 </div>
                 <button
                     className="btn-primary"
                     onClick={() => setShowAdd(!showAdd)}
-                    style={{ padding: "12px 24px", borderRadius: "12px" }}
+                    style={{ padding: "12px 24px", borderRadius: "12px", justifyContent: "flex-start" }}
                 >
                     {showAdd ? "Close Panel" : "➕ Enroll New Guest"}
                 </button>
@@ -122,16 +150,16 @@ export default function CustomerPage() {
                                 <th>Expenditure</th>
                                 <th>Visits</th>
                                 <th>Last Visit</th>
-                                <th style={{ textAlign: "right" }}>Marketing</th>
+                                <th style={{ textAlign: "left" }}>Marketing</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="7" style={{ padding: "60px", textAlign: "center" }}>
+                                <tr><td colSpan="7" style={{ padding: "60px", textAlign: "left" }}>
                                     <div style={{ width: "24px", height: "24px", border: "2px solid rgba(56, 189, 248, 0.1)", borderTopColor: "var(--accent-primary)", borderRadius: "50%", animation: "spin 1s linear infinite", display: "inline-block" }}></div>
                                 </td></tr>
                             ) : filtered.length === 0 ? (
-                                <tr><td colSpan="7" style={{ padding: "60px", textAlign: "center", color: "var(--text-dim)" }}>No guest records found matching these criteria.</td></tr>
+                                <tr><td colSpan="7" style={{ padding: "60px", textAlign: "left", color: "var(--text-dim)" }}>No guest records found matching these criteria.</td></tr>
                             ) : filtered.map((c, idx) => (
                                 <tr key={c.id} style={{ animation: "fadeIn 0.3s ease-out forwards", animationDelay: `${idx * 0.05}s`, opacity: 0 }}>
                                     <td style={{ fontWeight: "600" }}>
@@ -144,9 +172,9 @@ export default function CustomerPage() {
                                     <td style={{ color: "var(--text-muted)", fontSize: "12px" }}>
                                         {c.last_visit ? new Date(c.last_visit).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : "Never"}
                                     </td>
-                                    <td style={{ textAlign: "right" }}>
+                                    <td style={{ textAlign: "left" }}>
                                         <a 
-                                            href={`https://wa.me/91${c.mobile}`} 
+                                            href={`https://wa.me/${c.mobile.replace(/\+/g, "")}`} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
                                             style={{ 
@@ -159,6 +187,7 @@ export default function CustomerPage() {
                                                 textDecoration: "none",
                                                 display: "inline-flex",
                                                 alignItems: "center",
+                                                justifyContent: "flex-start",
                                                 gap: "5px",
                                                 border: "1px solid rgba(37, 211, 102, 0.2)"
                                             }}

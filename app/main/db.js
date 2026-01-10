@@ -22,6 +22,32 @@ function initDb() {
         )
     `);
 
+    // Migration: Add columns if they don't exist
+    // Using a more robust check by attempting to select names
+    const checkColumn = (col) => {
+        try {
+            db.prepare(`SELECT ${col} FROM customers LIMIT 0`).get();
+            return true;
+        } catch (e) {
+            return false;
+        }
+    };
+
+    if (!checkColumn("total_spent")) {
+        console.log("Adding total_spent column...");
+        try { db.exec("ALTER TABLE customers ADD COLUMN total_spent REAL DEFAULT 0"); } catch (e) {}
+    }
+    if (!checkColumn("visits_count")) {
+        console.log("Adding visits_count column...");
+        try { db.exec("ALTER TABLE customers ADD COLUMN visits_count INTEGER DEFAULT 0"); } catch (e) {}
+    }
+    if (!checkColumn("last_visit")) {
+        console.log("Adding last_visit column...");
+        try { db.exec("ALTER TABLE customers ADD COLUMN last_visit DATETIME"); } catch (e) {}
+    }
+    
+    console.log("Guest table schema sync complete.");
+
   // Categories Table
   db.exec(`
         CREATE TABLE IF NOT EXISTS categories (
@@ -92,10 +118,11 @@ const dbFunctions = {
   getCustomerByMobile: (mobile) =>
     db.prepare("SELECT * FROM customers WHERE mobile = ?").get(mobile),
   addCustomer: (customer) => {
+    // Robust insert that works even if migration is fresh
     const stmt = db.prepare(
       "INSERT INTO customers (name, mobile, notes, total_spent, visits_count) VALUES (?, ?, ?, 0, 0)"
     );
-    return stmt.run(customer.name, customer.mobile, customer.notes);
+    return stmt.run(customer.name, customer.mobile, customer.notes || "");
   },
 
   // Menu CRUD
@@ -108,12 +135,21 @@ const dbFunctions = {
     db
       .prepare("UPDATE categories SET name = ?, emoji = ? WHERE id = ?")
       .run(cat.name, cat.emoji, id),
-  deleteCategory: (id) =>
-    db.prepare("DELETE FROM categories WHERE id = ?").run(id),
+  deleteCategory: (id) => {
+    const deleteItems = db.prepare("DELETE FROM menu_items WHERE category_id = ?");
+    const deleteCat = db.prepare("DELETE FROM categories WHERE id = ?");
+    
+    const transaction = db.transaction((catId) => {
+      deleteItems.run(catId);
+      return deleteCat.run(catId);
+    });
+    
+    return transaction(id);
+  },
 
   getMenuItems: (categoryId) => {
     if (categoryId) {
-      return db.prepare("SELECT * FROM menu_items WHERE category_id = ?").all();
+      return db.prepare("SELECT * FROM menu_items WHERE category_id = ?").all(categoryId);
     }
     return db.prepare("SELECT * FROM menu_items").all();
   },
@@ -171,17 +207,31 @@ const dbFunctions = {
 
   // Bill CRUD
   getNextBillNo: () => {
-    // Check if we have a reset point
     let startId = 0;
+    let offset = 0;
     try {
-        const setting = db.prepare("SELECT value FROM app_settings WHERE key = 'bill_sequence_start_id'").get();
-        if (setting) startId = parseInt(setting.value);
-    } catch (e) {
-        // Table might not exist yet if initDb hasn't run fully or old DB, default 0
-    }
+        const resetSetting = db.prepare("SELECT value FROM app_settings WHERE key = 'bill_sequence_start_id'").get();
+        if (resetSetting) startId = parseInt(resetSetting.value);
+        
+        const offsetSetting = db.prepare("SELECT value FROM app_settings WHERE key = 'bill_sequence_offset'").get();
+        if (offsetSetting) offset = parseInt(offsetSetting.value);
+    } catch (e) {}
 
     const row = db.prepare("SELECT COUNT(*) as count FROM bills WHERE id > ?").get(startId);
-    return (row.count + 1).toString().padStart(2, '0');
+    const nextNo = offset + row.count + 1;
+    return nextNo.toString().padStart(2, '0');
+  },
+  setBillOffset: (newStartingNo) => {
+    const offset = Math.max(0, parseInt(newStartingNo) - 1);
+    db.prepare(`
+        INSERT INTO app_settings (key, value) VALUES ('bill_sequence_offset', ?)
+        ON CONFLICT(key) DO UPDATE SET value=excluded.value
+    `).run(offset.toString());
+    return true;
+  },
+  getBillOffset: () => {
+    const setting = db.prepare("SELECT value FROM app_settings WHERE key = 'bill_sequence_offset'").get();
+    return setting ? parseInt(setting.value) + 1 : 1;
   },
   resetBillSequence: () => {
     // Set the current max ID as the start point for the new sequence
