@@ -1,4 +1,4 @@
-# Delivery & Deployment Guide for Kallu's Tandon POS
+# Delivery & Deployment Guide for Kallo's Tandon Veg POS
 
 Congratulations on completing the setup! Follow this guide to smoothy hand over the software to the restaurant owner.
 
@@ -14,7 +14,7 @@ Congratulations on completing the setup! Follow this guide to smoothy hand over 
 1. **Build the Installer** (Do this on your dev machine):
    - Open your terminal in the project folder.
    - Run: `npm run build`
-   - This will create a `.exe` installer in the `dist/` folder (e.g., `Kallus Tandon Veg POS Setup 1.0.0.exe`).
+   - This will create a `.exe` installer in the `dist/` folder (e.g., `Kallo's Tandon Veg POS Setup 1.0.0.exe`).
 2. **Install on Client Machine**:
    - Copy the `.exe` file to the restaurant's computer (via Pen drive or WhatsApp).
    - Double-click to install. It will launch automatically.
@@ -64,12 +64,24 @@ The software relies on the **Default Printer** being the Thermal Printer.
 ## 4. Maintenance & Support
 
 - **Menu Changes**: Show the owner how to go to the **"Menu"** page to Add/Edit prices or delete items.
-- **Backups**: The system auto-saves PDF copies of every bill in `Documents/Invoices`. Tell them **never to delete that folder** effectively acting as a record.
+- **Backups**: The system auto-saves JPG copies of every bill in `Documents/Invoices`.
+  - _Pro Tip_: Sign in to Google Drive or OneDrive on this PC and sync the `Invoices` folder for free cloud backup.
 - **Support**: If the screen goes blank or freezes, simply close the app and reopen it. Data is safe in the database.
 
 ---
 
-## 5. Handover Checklist
+## 5. Troubleshooting (Common Issues)
+
+| Issue                       | Solution                                                                   |
+| :-------------------------- | :------------------------------------------------------------------------- |
+| **Printer not printing**    | Check if it's set as **Default Printer**. Restart the printer and the app. |
+| **Receipt text is cut off** | Ensure the paper width is set to 80mm or 58mm in Printer Preferences.      |
+| **Bill number skipped**     | This happens if an order is cancelled. It's normal for audit trails.       |
+| **App won't open**          | Check if another instance is already running in the Task Manager.          |
+
+---
+
+## 6. Handover Checklist
 
 - [ ] App Installed & Shortcut on Desktop.
 - [ ] Thermal Printer set as **Default**.

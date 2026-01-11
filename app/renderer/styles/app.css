@@ -14,7 +14,12 @@
   --accent-secondary: #ff8c42; /* Sunset Orange */
   --accent-glow: rgba(255, 77, 77, 0.4);
 
-  --grad-primary: linear-gradient(135deg, #ff1b6b 0%, #ff4521 50%, #ff8a00 100%);
+  --grad-primary: linear-gradient(
+    135deg,
+    #ff1b6b 0%,
+    #ff4521 50%,
+    #ff8a00 100%
+  );
   --grad-surface: linear-gradient(
     145deg,
     rgba(255, 255, 255, 0.05) 0%,
@@ -88,11 +93,26 @@ body {
   font-family: "Outfit", sans-serif;
   background-color: var(--bg-app);
   color: var(--text-main);
-  background-image: 
-    radial-gradient(circle at 10% 20%, rgba(255, 27, 107, 0.4) 0%, transparent 40%),
-    radial-gradient(circle at 90% 10%, rgba(255, 138, 0, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 50% 90%, rgba(255, 69, 33, 0.25) 0%, transparent 60%),
-    radial-gradient(circle at 0% 100%, rgba(255, 27, 107, 0.2) 0%, transparent 40%);
+  background-image: radial-gradient(
+      circle at 10% 20%,
+      rgba(255, 27, 107, 0.4) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(255, 138, 0, 0.3) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 50% 90%,
+      rgba(255, 69, 33, 0.25) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 0% 100%,
+      rgba(255, 27, 107, 0.2) 0%,
+      transparent 40%
+    );
   background-attachment: fixed;
   min-height: 100vh;
   overflow: hidden;
@@ -135,8 +155,12 @@ button {
   transition: var(--transition-base);
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
+}
+
+.btn-center {
+  justify-content: center !important;
 }
 
 .btn-primary {

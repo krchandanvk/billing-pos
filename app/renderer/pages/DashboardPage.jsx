@@ -68,8 +68,8 @@ export default function DashboardPage() {
 
     return (
         <div style={{ padding: "8px" }}>
-            <div style={{ marginBottom: "16px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                <div>
+            <div style={{ marginBottom: "24px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "16px" }}>
+                <div style={{ textAlign: "left" }}>
                     <h1 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "2px" }}>Arctic Dashboard</h1>
                     <p style={{ color: "var(--text-dim)", fontSize: "12px" }}>Real-time business performance overview</p>
                 </div>
@@ -194,7 +194,7 @@ export default function DashboardPage() {
                                         </div>
                                     </div>
                                 )) : (
-                                    <div style={{ padding: "40px", textAlign: "center", color: "var(--text-dim)", fontSize: "13px" }}>No data points available</div>
+                                    <div style={{ padding: "40px 0", textAlign: "left", color: "var(--text-dim)", fontSize: "13px" }}>No data points available</div>
                                 )}
                             </div>
                         </div>

@@ -7,15 +7,31 @@
             margin: 0;
         }
 
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: auto;
+            background: white;
+            overflow: hidden;
+            width: 285px; /* Safely within 80mm paper width */
+        }
+
+        #receipt-container {
+            box-sizing: border-box;
+            width: 285px;
+            padding: 10px 5px 20px 5px !important; /* Reduced side padding to prevent chopping */
+            background: white;
+            display: block;
+        }
+
         body {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
+            font-size: 12px; /* Balanced for 80mm paper */
             margin: 0;
-            padding: 3px;
-            width: 300px; /* Standard 80mm thermal paper width */
-            font-weight: 600;
+            padding: 0;
+            font-weight: 700;
             color: black;
-            background: white;
+            width: 285px;
         }
 
         .center {
@@ -27,20 +43,22 @@
         }
 
         .header-name {
-            font-size: 16px;
+            font-size: 19px;
             font-weight: 900;
-            margin-bottom: 1px;
-            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
         }
 
         .sub-header {
-            font-size: 9px;
-            line-height: 1.1;
+            font-size: 10px;
+            line-height: 1.2;
+            font-weight: 700;
         }
 
         .dashed-line {
-            border-top: 1.5px dashed black;
-            margin: 4px 0;
+            border-top: 1px dashed #000;
+            margin: 5px 0;
+            width: 100%;
         }
 
         table {
@@ -74,9 +92,17 @@
             padding: 1px 0;
         }
 
-        .grand-total-row {
-            font-size: 15px;
+        .grand-total-row td {
+            font-size: 16px;
             font-weight: 900;
+            padding-top: 5px;
+        }
+
+        .currency-symbol {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 900;
+            line-height: 1;
         }
 
         #amount-words {
@@ -86,110 +112,116 @@
         }
 
         .footer {
-            margin-top: 15px;
-            font-size: 9px;
+            padding-top: 15px;
+            font-size: 10px;
             line-height: 1.2;
+            text-align: center;
         }
     </style>
 </head>
 
 <body>
-
-    <!-- HEADER -->
-    <div class="center">
-        <img src="assets/hotel_logo.png" style="width: 100px; margin-bottom: 3px; mix-blend-mode: multiply;">
-        <div class="header-name">KALLO'S TANDON</div>
-        <div class="sub-header">NEAR SATI CHAURA MANDIR</div>
-        <div class="sub-header">GURU GOVIND SINGH LINK PATH PATNA CITY</div>
-        <div class="sub-header">GST NO. 10APHPK4168H2Z2</div>
-        <div style="font-weight: 900; margin-top: 1px; font-size: 11px;">MOB-9234287770</div>
-    </div>
-
-    <!-- BILL META -->
-    <div style="margin-top: 6px;">
-        <div class="meta-text">
-            <span>BILL NO : <span id="bill-no">23</span></span>
-            <span>DT : <span id="date">03/01/26</span> TM: <span id="time">19:58:52</span></span>
+    <div id="receipt-container">
+        <!-- HEADER -->
+        <div class="center">
+            <img src="assets/hotel_logo.png" style="width: 100px; margin-bottom: 5px; mix-blend-mode: multiply;">
+            <div class="header-name">KALLO'S TANDON</div>
+            <div class="sub-header">NEAR SATI CHAURA MANDIR</div>
+            <div class="sub-header">GURU GOVIND SIGH LINK PATH PATNA CITY</div>
+            <div class="sub-header">GST NO. 10APHPK4168H2Z2</div>
+            <div style="font-weight: 900; margin-top: 2px; font-size: 12px;">MOB-9234287770</div>
         </div>
-        <div class="meta-text">
-            <span>NAME : <span id="customer-name">CASH</span></span>
+
+        <!-- BILL META -->
+        <div style="margin-top: 8px; font-size: 11px; font-weight: 900;">
+            <div style="display: flex; justify-content: space-between; overflow: hidden; white-space: nowrap;">
+                <div>BILL NO : <span id="bill-no">23</span></div>
+                <div style="padding-left: 20px;">DT : <span id="bill-date">03/01/26</span> TM: <span id="bill-time">19:58:52</span></div>
+            </div>
+            <div style="margin-top: 2px;">NAME : <span id="table-name">4</span></div>
         </div>
-    </div>
 
-    <div class="dashed-line"></div>
+        <div class="dashed-line"></div>
 
-    <!-- TABLE HEADER -->
-    <table style="font-size: 10px;">
-        <thead>
+        <!-- TABLE HEADER -->
+        <table style="font-size: 10px;">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">SR</th>
+                    <th style="width: 40%;">ITEM</th>
+                    <th style="width: 15%; text-align: center;">QTY</th>
+                    <th style="width: 17%; text-align: right;">PRICE</th>
+                    <th style="width: 18%; text-align: right;">AMOUNT</th>
+                </tr>
+            </thead>
+        </table>
+
+        <div class="dashed-line"></div>
+
+        <!-- ITEMS -->
+        <table id="items-table">
+            <tbody id="items-body">
+                <!-- Items injected via JS -->
+            </tbody>
+        </table>
+
+        <div class="dashed-line"></div>
+
+        <!-- SUMMARY -->
+        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px;">
+            <div>ITEM: <span id="total-items">0</span> QTY: <span id="total-qty">0</span></div>
+            <div class="right">AMOUNT: <span id="subtotal-display">0.00</span></div>
+        </div>
+
+        <div class="center" style="font-size: 9px; margin: 4px 0;">INCLUSIVE OF ALL TAXES</div>
+
+        <div class="dashed-line"></div>
+
+        <!-- TAXES & TOTAL -->
+        <table class="totals-table">
             <tr>
-                <th style="width: 10%;">SR</th>
-                <th style="width: 40%;">ITEM</th>
-                <th style="width: 15%; text-align: center;">QTY</th>
-                <th style="width: 17%; text-align: right;">PRICE</th>
-                <th style="width: 18%; text-align: right;">AMOUNT</th>
+                <td style="width: 40%;">SGST</td>
+                <td style="width: 25%; text-align: center;">@ 2.50%</td>
+                <td style="width: 5%; text-align: center;">:</td>
+                <td class="right" id="sgst">0.00</td>
             </tr>
-        </thead>
-    </table>
+            <tr>
+                <td>CGST</td>
+                <td style="text-align: center;">@ 2.50%</td>
+                <td style="text-align: center;">:</td>
+                <td class="right" id="cgst">0.00</td>
+            </tr>
+            <tr>
+                <td>TOTAL GST</td>
+                <td></td>
+                <td style="text-align: center;">:</td>
+                <td class="right" id="total-gst">0.00</td>
+            </tr>
+            <tr class="grand-total-row">
+                <td>GRAND TOTAL</td>
+                <td></td>
+                <td style="text-align: center;">:</td>
+                <td class="right" id="grand-total">950.00</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td class="currency-symbol">₹</td>
+                <td></td>
+            </tr>
+        </table>
 
-    <div class="dashed-line"></div>
+        <div class="dashed-line"></div>
 
-    <!-- ITEMS -->
-    <table id="items-table">
-        <tbody id="items-body">
-            <!-- Items injected via JS -->
-        </tbody>
-    </table>
+        <!-- AMOUNT IN WORDS -->
+        <div id="amount-words">
+            ZERO ONLY.
+        </div>
 
-    <div class="dashed-line"></div>
-
-    <!-- SUMMARY -->
-    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px;">
-        <div>ITEM: <span id="total-items">0</span> QTY: <span id="total-qty">0</span></div>
-        <div class="right">AMOUNT: <span id="subtotal-display">0.00</span></div>
-    </div>
-
-    <div class="center" style="font-size: 9px; margin: 4px 0;">INCLUSIVE OF ALL TAXES</div>
-
-    <div class="dashed-line"></div>
-
-    <!-- TAXES & TOTAL -->
-    <table class="totals-table">
-        <tr>
-            <td style="width: 40%;">SGST</td>
-            <td style="width: 25%; text-align: center;">@ 2.50%</td>
-            <td style="width: 5%; text-align: center;">:</td>
-            <td class="right" id="sgst">0.00</td>
-        </tr>
-        <tr>
-            <td>CGST</td>
-            <td style="text-align: center;">@ 2.50%</td>
-            <td style="text-align: center;">:</td>
-            <td class="right" id="cgst">0.00</td>
-        </tr>
-        <tr>
-            <td>TOTAL GST</td>
-            <td></td>
-            <td style="text-align: center;">:</td>
-            <td class="right" id="total-gst">0.00</td>
-        </tr>
-        <tr class="grand-total-row">
-            <td>GRAND TOTAL</td>
-            <td></td>
-            <td style="text-align: center;">: ₹</td>
-            <td class="right" id="grand-total">950.00</td>
-        </tr>
-    </table>
-
-    <div class="dashed-line"></div>
-
-    <!-- AMOUNT IN WORDS -->
-    <div id="amount-words">
-        ZERO ONLY.
-    </div>
-
-    <div class="center footer">
-        <div>FREE HOME DELIVERY ABOVE</div>
-        <div style="font-weight: 900;">399 RS</div>
+        <div id="footer-area" class="center footer" style="margin: 0; padding: 15px 0 0 0;">
+            <div style="font-size: 11px;">FREE HOME DELIVERY MINIMUM</div>
+            <div style="font-weight: 900; font-size: 12px;">399 RS ONLY</div>
+        </div>
     </div>
 
     <script>
@@ -217,12 +249,21 @@
             const data = window.billData;
 
             document.getElementById("bill-no").innerText = data.billNo || "23";
+            document.getElementById("table-name").innerText = data.tableName || data.customerName || "GUEST";
             
-            // Use billData timestamp if provided, otherwise use current time
             const billTime = data.timestamp ? new Date(data.timestamp) : new Date();
-            document.getElementById("date").innerText = billTime.toLocaleDateString("en-GB");
-            document.getElementById("time").innerText = billTime.toLocaleTimeString("en-GB", { hour12: false });
-            document.getElementById("customer-name").innerText = data.customerName || data.customerId || "CASH";
+            
+            // Format: DD/MM/YY
+            const day = String(billTime.getDate()).padStart(2, '0');
+            const month = String(billTime.getMonth() + 1).padStart(2, '0');
+            const year = String(billTime.getFullYear()).slice(-2);
+            document.getElementById("bill-date").innerText = `${day}/${month}/${year}`;
+            
+            // Format: HH:MM:SS
+            const hours = String(billTime.getHours()).padStart(2, '0');
+            const mins = String(billTime.getMinutes()).padStart(2, '0');
+            const secs = String(billTime.getSeconds()).padStart(2, '0');
+            document.getElementById("bill-time").innerText = `${hours}:${mins}:${secs}`;
 
             const tbody = document.getElementById("items-body");
             tbody.innerHTML = "";

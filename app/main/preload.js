@@ -25,6 +25,9 @@ contextBridge.exposeInMainWorld("api", {
   addMenuItem: (data) => ipcRenderer.invoke("db:add-menu-item", data),
   updateMenuItem: (id, data) => ipcRenderer.invoke("db:update-menu-item", id, data),
   deleteMenuItem: (id) => ipcRenderer.invoke("db:delete-menu-item", id),
+  // Bill Sequence Functions
+  getBillOffset: () => ipcRenderer.invoke("db:get-bill-offset"),
+  setBillOffset: (val) => ipcRenderer.invoke("db:set-bill-offset", val),
   // System Functions
   backupData: () => ipcRenderer.invoke("sys:backup-data"),
   exportSalesCSV: () => ipcRenderer.invoke("sys:export-sales-csv"),

@@ -10,34 +10,42 @@
     "react": "vite",
     "electron": "electron .",
     "build": "electron-builder",
+    "postinstall": "electron-builder install-app-deps",
     "cleanup": "node scripts/cleanup.js"
   },
   "dependencies": {
     "better-sqlite3": "^9.4.0",
     "chart.js": "^4.5.1",
-    "electron": "^28.0.0",
     "electron-store": "^8.2.0",
     "node-fetch": "^3.3.2",
     "react": "^19.2.3",
     "react-chartjs-2": "^5.3.1",
-    "react-dom": "^19.2.3",
-    "sqlite3": "^5.1.7"
+    "react-dom": "^19.2.3"
   },
   "devDependencies": {
-    "@electron/rebuild": "^3.7.2",
     "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^8.2.2",
+    "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
     "vite": "^5.4.21"
   },
   "build": {
     "appId": "com.biznesssoftware.billing",
-    "productName": "Kallu's Tandon Veg POS",
+    "productName": "Kallo's Tandon Veg POS",
     "directories": {
       "output": "dist"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Kallo's POS"
     }
   }
 }

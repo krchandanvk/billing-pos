@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, dialog, Menu } = require("electron");
+Menu.setApplicationMenu(null); // Remove default menu bar (File, Edit, Help, etc.)
 const path = require("path");
 const { initDb, dbFunctions } = require("./db");
 const { menuData } = require("./seedData");
@@ -6,7 +7,7 @@ const { menuData } = require("./seedData");
 // Initialize Database
 initDb();
 dbFunctions.seedMenu(menuData);
-dbFunctions.pruneOldData(); // Auto-delete history older than 30 days
+dbFunctions.pruneOldData(); // Resets analytics/sales yearly on 1st January
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -37,8 +38,12 @@ ipcMain.handle("print-bill", (event, billData) => {
       fs.mkdirSync(saveDir, { recursive: true });
     }
 
-    // 2. Generate Filename: Just bill number as JPG (e.g., "01.jpg")
-    const filename = `${billData.billNo || 'DRAFT'}.jpg`;
+    // 2. Generate Filename: BillNo_Date_Time.jpg (e.g., "68_09-Jan-2026_8-05pm.jpg")
+    const billTimestamp = billData.timestamp ? new Date(billData.timestamp) : new Date();
+    const dateStr = billTimestamp.toLocaleString('en-IN', { dateStyle: 'medium' }).replace(/\s/g, '-');
+    const timeStr = billTimestamp.toLocaleString('en-IN', { timeStyle: 'short' }).replace(/\s/g, '').replace(':', '-').toLowerCase();
+    
+    const filename = `${billData.billNo || 'DRAFT'}_${dateStr}_${timeStr}.jpg`;
     const filePath = path.join(saveDir, filename);
 
     const printWin = new BrowserWindow({
@@ -57,8 +62,13 @@ ipcMain.handle("print-bill", (event, billData) => {
           if (typeof renderBill === 'function') renderBill();
         `);
 
+        // Wait for logo and fonts to fully render
         setTimeout(async () => {
           try {
+            const height = await printWin.webContents.executeJavaScript('document.getElementById("receipt-container").getBoundingClientRect().height');
+            const heightInPixels = Math.ceil(height) + 35; // Increased buffer for physical cutter
+            printWin.setSize(320, heightInPixels); 
+
             // 5. Capture as JPG Image (thermal print style)
             const imageData = await printWin.webContents.capturePage();
             const jpgBuffer = imageData.toJPEG(95); // 95% quality
@@ -86,7 +96,8 @@ ipcMain.handle("print-bill", (event, billData) => {
                     payment_mode: billData.paymentMode || 'Cash',
                     image_path: filePath
                 };
-                dbFunctions.addBill(billToSave, billData.items);
+                // Pass the timestamp to ensure database uses the same timestamp as printed bill
+                dbFunctions.addBill(billToSave, billData.items, billData.timestamp);
                 } catch (dbErr) {
                 console.error("Failed to archive bill:", dbErr);
                 }
@@ -98,7 +109,17 @@ ipcMain.handle("print-bill", (event, billData) => {
             resolve({ success: true, path: filePath });
 
             // 7. Trigger Thermal Print
-            printWin.webContents.print({ silent: false, printBackground: true }, () => {
+            const heightInMicrons = Math.floor(heightInPixels * 264.58); // convert px to microns for Electron's pageSize
+            
+            printWin.webContents.print({ 
+              silent: false, 
+              printBackground: true,
+              margins: { marginType: 'none' },
+              pageSize: {
+                width: 80000, // 80mm
+                height: heightInMicrons
+              }
+            }, () => {
               printWin.close();
             });
 
@@ -193,43 +214,67 @@ ipcMain.handle("sys:open-data-folder", () => {
 ipcMain.handle("print-kot", async (event, kotData) => {
   const printWin = new BrowserWindow({
     show: false,
-    width: 350, // Increased width to prevent wrapping
+    width: 320,
     height: 1500,
-    webPreferences: { nodeIntegration: false, contextIsolation: true }
+    webPreferences: { 
+        nodeIntegration: false, 
+        contextIsolation: true,
+        preload: path.join(__dirname, "preload.js")
+    }
   });
 
-  // Use a simple HTML template for KOT
-  const kotHtml = `
-    <html>
-      <body style="font-family: 'Courier New'; width: 300px; padding: 5px; color: black; background: white;">
-        <div style="text-align: center; font-size: 24px; font-weight: 900; margin: 10px 0; border: 2px solid black; padding: 5px;">TABLE #: ${kotData.tableNo || 'N/A'}</div>
-        <div style="text-align: center; font-size: 12px; margin-bottom: 5px;">${new Date().toLocaleTimeString()}</div>
-        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-          <thead style="border-bottom: 1px dashed black;">
-            <tr style="text-align: left;">
-              <th>ITEM</th>
-              <th style="text-align: right;">QTY</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${kotData.items.map(it => `
-              <tr>
-                <td style="padding: 5px 0;">${it.name.toUpperCase()}</td>
-                <td style="text-align: right;">${it.qty}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        <div style="border-top: 2px solid black; margin-top: 10px; padding-top: 5px; text-align: center; font-size: 11px;">SEND TO KITCHEN</div>
-      </body>
-    </html>
-  `;
+  const kotPath = path.join(__dirname, "../renderer/kot.html");
+  printWin.loadFile(kotPath);
 
-  printWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(kotHtml)}`);
-  
-  printWin.webContents.once("did-finish-load", () => {
-    printWin.webContents.print({ silent: false, printBackground: true }, () => {
-      printWin.close();
+  return new Promise((resolve, reject) => {
+    printWin.webContents.once("did-finish-load", async () => {
+      try {
+        // 1. Inject Data and Render
+        await printWin.webContents.executeJavaScript(`
+          if (typeof renderKOT === 'function') renderKOT(${JSON.stringify(kotData)});
+        `);
+
+        // 2. Wait for rendering
+        setTimeout(async () => {
+          try {
+            const height = await printWin.webContents.executeJavaScript('document.getElementById("kot-container").getBoundingClientRect().height');
+            const heightInPixels = Math.ceil(height) + 35;
+            printWin.setSize(320, heightInPixels);
+
+            // 3. Capture as JPG
+            const kotDir = path.join(app.getPath('documents'), 'KOTs');
+            if (!fs.existsSync(kotDir)) fs.mkdirSync(kotDir, { recursive: true });
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const fileName = `KOT_Table_${kotData.tableNo || 'NA'}_${timestamp}.jpg`;
+            const filePath = path.join(kotDir, fileName);
+
+            const imageData = await printWin.webContents.capturePage();
+            fs.writeFileSync(filePath, imageData.toJPEG(95));
+
+            // 4. Print
+            const heightInMicrons = Math.floor(heightInPixels * 264.58);
+            printWin.webContents.print({
+              silent: false,
+              printBackground: true,
+              margins: { marginType: 'none' },
+              pageSize: { width: 80000, height: heightInMicrons }
+            }, () => {
+              printWin.close();
+              resolve({ success: true, path: filePath });
+            });
+
+          } catch (err) {
+            console.error("KOT Capture Error:", err);
+            printWin.close();
+            reject(err);
+          }
+        }, 800);
+
+      } catch (err) {
+        printWin.close();
+        reject(err);
+      }
     });
   });
 });
@@ -249,6 +294,8 @@ ipcMain.handle("db:get-hourly-sales", () => dbFunctions.getHourlySales());
 ipcMain.handle("db:get-advanced-analytics", () => dbFunctions.getAdvancedAnalytics());
 ipcMain.handle("db:get-next-bill-no", () => dbFunctions.getNextBillNo());
 ipcMain.handle("db:reset-bill-sequence", () => dbFunctions.resetBillSequence());
+ipcMain.handle("db:set-bill-offset", (e, val) => dbFunctions.setBillOffset(val));
+ipcMain.handle("db:get-bill-offset", () => dbFunctions.getBillOffset());
 
 // Menu IPC Handlers
 ipcMain.handle("db:get-categories", () => dbFunctions.getCategories());

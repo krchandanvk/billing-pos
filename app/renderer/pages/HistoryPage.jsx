@@ -64,20 +64,20 @@ export default function HistoryPage() {
 
     return (
         <div style={{ padding: "8px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "16px" }}>
-                <div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "16px", marginBottom: "24px" }}>
+                <div style={{ textAlign: "left" }}>
                     <h1 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "2px" }}>Transaction Ledger</h1>
                     <p style={{ color: "var(--text-dim)", fontSize: "12px" }}>Historical record of all issued invoices</p>
                 </div>
-                <div style={{ display: "flex", gap: "8px" }}>
+                <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
                     <button
                         className="btn-secondary"
                         onClick={() => setShowAll(!showAll)}
-                        style={{ fontSize: "12px", padding: "8px 12px" }}
+                        style={{ fontSize: "12px", padding: "8px 12px", justifyContent: "flex-start" }}
                     >
                         {showAll ? "🕰️ Recent" : "📁 Archive"}
                     </button>
-                    <button className="btn-primary" onClick={fetchBills} style={{ padding: "8px 12px" }}>
+                    <button className="btn-primary" onClick={fetchBills} style={{ padding: "8px 12px", justifyContent: "flex-start" }}>
                         <span style={{ fontSize: "14px" }}>🔄</span>
                     </button>
                 </div>
@@ -106,16 +106,16 @@ export default function HistoryPage() {
                                 <th>Customer Entity</th>
                                 <th>Revenue</th>
                                 <th>Method</th>
-                                <th style={{ textAlign: "right" }}>Actions</th>
+                                <th style={{ textAlign: "left" }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="6" style={{ padding: "60px", textAlign: "center" }}>
+                                <tr><td colSpan="6" style={{ padding: "60px", textAlign: "left" }}>
                                     <div style={{ width: "24px", height: "24px", border: "2px solid rgba(56, 189, 248, 0.1)", borderTopColor: "var(--accent-primary)", borderRadius: "50%", animation: "spin 1s linear infinite", display: "inline-block" }}></div>
                                 </td></tr>
                             ) : filtered.length === 0 ? (
-                                <tr><td colSpan="6" style={{ padding: "60px", textAlign: "center", color: "var(--text-dim)" }}>No matching records found in the {showAll ? 'archive' : 'recent ledger'}.</td></tr>
+                                <tr><td colSpan="6" style={{ padding: "60px", textAlign: "left", color: "var(--text-dim)" }}>No matching records found in the {showAll ? 'archive' : 'recent ledger'}.</td></tr>
                             ) : filtered.map((b, idx) => (
                                 <tr key={b.id} style={{ animation: "fadeIn 0.3s ease-out forwards", animationDelay: `${idx * 0.05}s`, opacity: 0 }}>
                                     <td style={{ fontWeight: "600", color: "var(--accent-primary)" }}>#{b.bill_no}</td>
@@ -131,10 +131,10 @@ export default function HistoryPage() {
                                             {b.payment_mode || 'Cash'}
                                         </span>
                                     </td>
-                                    <td style={{ textAlign: "right" }}>
+                                    <td style={{ textAlign: "left" }}>
                                         <button
                                             className="btn-secondary"
-                                            style={{ fontSize: "12px", padding: "6px 14px", borderRadius: "8px" }}
+                                            style={{ fontSize: "12px", padding: "6px 14px", borderRadius: "8px", justifyContent: "flex-start" }}
                                             onClick={() => handleReprint(b)}
                                         >
                                             🖨️ Reprint
